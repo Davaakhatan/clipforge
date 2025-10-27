@@ -42,6 +42,10 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Set app details for macOS permissions
+  app.setName('ClipForge')
+  app.setAsDefaultProtocolClient('clipforge')
+  
   createWindow()
 
   app.on('activate', () => {
@@ -164,4 +168,28 @@ ipcMain.handle('getScreenSources', async () => {
 ipcMain.handle('openScreenRecordingSettings', async () => {
   // Open System Settings to Screen Recording section
   shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture')
+})
+
+ipcMain.handle('saveRecording', async (event, data) => {
+  try {
+    const fs = await import('fs/promises')
+    const path = await import('path')
+    const os = await import('os')
+    
+    const fileName = data.fileName || `clipforge-record-${Date.now()}.webm`
+    const filePath = path.join(os.tmpdir(), fileName)
+    
+    await fs.writeFile(filePath, Buffer.from(data.buffer))
+    
+    return filePath
+  } catch (error) {
+    console.error('Error saving recording:', error)
+    throw error
+  }
+})
+
+ipcMain.handle('restoreWindow', async () => {
+  if (mainWindow) {
+    mainWindow.restore()
+  }
 })

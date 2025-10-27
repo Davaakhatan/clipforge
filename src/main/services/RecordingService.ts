@@ -13,10 +13,13 @@ class RecordingService {
   async getScreenSources() {
     try {
       console.log('Getting screen sources...')
+      
+      // Try to get sources - macOS will show permission dialog if needed
       const sources = await desktopCapturer.getSources({
-        types: ['window', 'screen'],
+        types: ['screen', 'window'], // Screen first
         thumbnailSize: { width: 320, height: 240 },
       })
+      
       console.log('Screen sources retrieved:', sources.length)
       
       // Log each source for debugging
@@ -25,10 +28,16 @@ class RecordingService {
       })
       
       return sources
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to get screen sources:', error)
-      console.error('Error details:', JSON.stringify(error, null, 2))
-      // Return empty array instead of throwing - let the UI handle it
+      
+      // Check if it's a permission issue
+      if (error.message && error.message.includes('Failed to get sources')) {
+        console.error('Permission denied. User needs to grant screen recording permission.')
+        console.error('To fix: Open System Settings > Privacy & Security > Screen Recording')
+        console.error('Enable "ClipForge" or "Electron" (development mode)')
+      }
+      
       return []
     }
   }

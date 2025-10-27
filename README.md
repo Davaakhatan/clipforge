@@ -12,6 +12,8 @@ ClipForge is a desktop video editor inspired by CapCut, built in 72 hours for th
 - ✅ **Clip Splitting** - Press `S` to split at playhead
 - ✅ **Undo/Redo** - Cmd+Z / Cmd+Shift+Z
 - ✅ **Video Preview** - Playback with play/pause controls
+- ✅ **Screen Recording** - Record screen with audio, auto-minimize to dock
+- ✅ **Webcam Recording** - Record webcam with microphone
 - ✅ **Export to MP4** - Export your timeline composition
 - ✅ **Keyboard Shortcuts** - Space (play/pause), Arrows (seek), S (split), Del (delete)
 
@@ -70,6 +72,15 @@ The packaged app will be in `dist/` directory:
 - **Mouse wheel**: Ctrl+wheel to zoom in/out
 - **Buttons**: +/- buttons in timeline header
 - **Adaptive**: Timeline auto-fits to viewport
+
+### Recording
+1. Click "Screen", "Webcam", or "Screen + Webcam" button
+2. **Screen recording**: Select screen or window from picker
+3. **Audio**: Toggle "Record Audio" checkbox for microphone
+4. Click "Stop Recording" when done
+5. Recording automatically appears in timeline
+
+**Note**: App automatically minimizes to dock during screen recording to avoid capturing itself.
 
 ### Export
 1. Click "Export Video" in header
@@ -132,12 +143,19 @@ src/
 - [x] Keyboard shortcuts
 - [x] Multi-track timeline (2 tracks)
 
+### ✅ Recording Features (Complete)
+- [x] Screen recording with source selection
+- [x] Webcam recording
+- [x] Picture-in-picture recording mode
+- [x] Microphone audio capture
+- [x] Auto-minimize during recording
+- [x] Recording duration tracking
+
 ### ⏳ Future Enhancements
-- [ ] Screen recording
-- [ ] Webcam recording
-- [ ] Picture-in-picture mode
-- [ ] Audio controls
+- [ ] Advanced audio controls
 - [ ] Transitions & effects
+- [ ] Multiple audio tracks
+- [ ] Video filters
 
 ## 🎨 UI/UX Highlights
 

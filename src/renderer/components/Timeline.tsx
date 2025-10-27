@@ -223,9 +223,10 @@ const Timeline: React.FC = () => {
     return 1000 // 1 second max detail
   }
 
-  const timeMarkers = []
+  const timeMarkers: number[] = []
   const interval = getMarkerInterval()
-  for (let i = 0; i <= Math.ceil(totalDuration / interval); i++) {
+  const numMarkers = Math.min(Math.ceil(totalDuration / interval), 10000) // Cap at 10000 markers to prevent overflow
+  for (let i = 0; i <= numMarkers; i++) {
     timeMarkers.push(i * interval)
   }
 
@@ -389,6 +390,7 @@ const Timeline: React.FC = () => {
                           e.stopPropagation()
                           removeClip(clip.id)
                           setSelectedClipId(null)
+                          saveHistory() // Save state for undo/redo
                         }}
                         className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white text-xs shadow-lg"
                       >

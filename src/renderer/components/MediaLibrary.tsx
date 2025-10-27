@@ -9,7 +9,7 @@ const formatTime = (ms: number) => {
 }
 
 const MediaLibrary: React.FC = () => {
-  const { state, addClip } = useProject()
+  const { state, addClip, removeClip, saveHistory } = useProject()
   const [importing, setImporting] = useState<string[]>([])
 
   const importVideoFile = useCallback(async (filePath: string, fileName: string) => {
@@ -100,7 +100,7 @@ const MediaLibrary: React.FC = () => {
       {state.clips.map(clip => (
         <div
           key={clip.id}
-          className="group p-3 bg-dark-secondary rounded-lg border border-gray-800 hover:border-accent hover:shadow-lg transition-all cursor-pointer relative overflow-hidden"
+          className="group p-3 bg-dark-secondary rounded-lg border border-gray-800 hover:border-accent hover:shadow-lg transition-all relative overflow-hidden"
         >
           {importing.includes(clip.filePath) && (
             <div className="absolute inset-0 bg-dark bg-opacity-90 flex items-center justify-center z-10 rounded-lg">
@@ -122,6 +122,18 @@ const MediaLibrary: React.FC = () => {
             <span className="text-gray-500">{formatTime(clip.duration)}</span>
             <span className="text-gray-600">📹 {Math.round(clip.duration / 1000)}s</span>
           </div>
+          
+          {/* Delete Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              removeClip(clip.id)
+              saveHistory() // Save state for undo/redo
+            }}
+            className="absolute top-2 right-2 w-6 h-6 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            ×
+          </button>
         </div>
       ))}
           </div>
