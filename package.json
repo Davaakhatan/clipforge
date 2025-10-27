@@ -1,0 +1,73 @@
+{
+  "name": "clipforge",
+  "version": "1.0.0",
+  "description": "A desktop video editor built with Electron",
+  "main": "dist-electron/main/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "package": "npm run build && electron-builder --mac",
+    "package:all": "npm run build && electron-builder --mac --win",
+    "dist": "npm run build && electron-builder --publish=never",
+    "forge": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "keywords": [
+    "video-editor",
+    "electron",
+    "desktop-app"
+  ],
+  "author": "ClipForge Team",
+  "license": "MIT",
+  "build": {
+    "appId": "com.clipforge.editor",
+    "productName": "ClipForge",
+    "mac": {
+      "category": "public.app-category.video",
+      "target": [
+        {
+          "target": "default",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "hardenedRuntime": true
+    },
+    "files": [
+      "dist-electron/**/*",
+      "node_modules/**/*",
+      "!node_modules/**/{README.md,README,readme.md,readme}",
+      "!node_modules/**/{LICENSE,license,LICENSE.md,license.md}",
+      "!node_modules/**/Makefile"
+    ]
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-slider": "^1.1.2",
+    "clsx": "^2.1.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "tailwindcss": "^3.4.1"
+  },
+  "devDependencies": {
+    "@types/electron": "^1.4.38",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.21",
+    "electron": "^29.0.0",
+    "electron-builder": "^24.9.1",
+    "electron-forge": "^5.2.4",
+    "electron-vite": "^4.0.1",
+    "eslint": "^8.56.0",
+    "postcss": "^8.5.6",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.11",
+    "vite-plugin-electron": "^0.15.6",
+    "vite-plugin-electron-renderer": "^0.14.6"
+  }
+}

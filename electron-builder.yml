@@ -1,0 +1,42 @@
+appId: com.clipforge.editor
+productName: ClipForge
+copyright: Copyright © 2024 ClipForge Team
+
+directories:
+  buildResources: build
+  output: release
+
+files:
+  - dist-electron/**/*
+  - node_modules/**/*
+  - package.json
+
+mac:
+  category: public.app-category.video
+  target:
+    - target: default
+      arch:
+        - x64
+        - arm64
+  icon: build/icon.icns
+  hardenedRuntime: true
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+
+dmg:
+  title: ClipForge
+  icon: build/icon.icns
+  background: build/background.png
+  contents:
+    - x: 380
+      y: 280
+      type: link
+      path: /Applications
+    - x: 110
+      y: 280
+      type: file
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
