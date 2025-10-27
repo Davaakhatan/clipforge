@@ -13,6 +13,7 @@ export interface Clip {
   trackId: number
   offset: number
   thumbnail?: string
+  speed: number // 0.25x, 0.5x, 1x (normal), 1.5x, 2x
 }
 
 export interface TimelineTrack {

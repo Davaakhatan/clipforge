@@ -29,6 +29,7 @@ const MediaLibrary: React.FC = () => {
           trackId: 0,
           offset: 0,
           thumbnail: result.thumbnailPath,
+          speed: 1, // Normal speed by default
         }
         addClip(clip)
       }

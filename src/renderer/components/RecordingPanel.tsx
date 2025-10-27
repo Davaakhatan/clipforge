@@ -475,6 +475,7 @@ const RecordingPanel: React.FC = () => {
         endTime: duration,
         trackId: 0,
         offset: 0,
+        speed: 1, // Normal speed by default
       }
       
       // Add to timeline

@@ -381,7 +381,37 @@ const Timeline: React.FC = () => {
                           {formatTime(clip.duration)}
                         </p>
                       </div>
+                      
+                      {/* Speed indicator */}
+                      <div className="absolute bottom-1 left-1">
+                        <p className="text-[10px] text-white bg-green-600 bg-opacity-80 px-1 rounded font-bold">
+                          {clip.speed}x
+                        </p>
+                      </div>
                     </div>
+
+                    {/* Speed Control Button */}
+                    {isSelected && (
+                      <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-dark border border-gray-700 rounded shadow-lg p-1 flex gap-1 z-20">
+                        {[0.25, 0.5, 1, 1.5, 2].map(speed => (
+                          <button
+                            key={speed}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              updateClip(clip.id, { speed })
+                              saveHistory()
+                            }}
+                            className={`px-2 py-1 text-xs rounded transition-colors ${
+                              clip.speed === speed
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                            }`}
+                          >
+                            {speed}x
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Delete Button */}
                     {isSelected && (

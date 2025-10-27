@@ -27,6 +27,14 @@ const VideoPreview: React.FC = () => {
     }
   }, [setCurrentTime, currentClip])
 
+  // Apply playback speed
+  useEffect(() => {
+    const video = videoRef.current
+    if (video && currentClip) {
+      video.playbackRate = currentClip.speed || 1
+    }
+  }, [currentClip, videoRef])
+
   // Sync video position when playhead moves while paused
   useEffect(() => {
     const video = videoRef.current
