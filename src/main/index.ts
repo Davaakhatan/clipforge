@@ -14,6 +14,8 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       webSecurity: false, // Allow loading local file:// resources
+      enableBlinkFeatures: 'ScreenCapture', // Enable screen capture API
+      permissions: ['accessibility-events', 'clipboard-read'], // Request necessary permissions
     },
     titleBarStyle: 'hidden',
     backgroundColor: '#0a0a0a',

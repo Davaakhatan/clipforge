@@ -7,6 +7,8 @@ const RecordingPanel: React.FC = () => {
   const [recordingType, setRecordingType] = useState<'screen' | 'webcam' | 'pip' | null>(null)
   const [includeAudio, setIncludeAudio] = useState(true)
   const [recordingStream, setRecordingStream] = useState<MediaStream | null>(null)
+  const [showSourcePicker, setShowSourcePicker] = useState(false)
+  const [availableSources, setAvailableSources] = useState<any[]>([])
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
@@ -45,43 +47,19 @@ const RecordingPanel: React.FC = () => {
           return
         }
         
-        // Validate sources array
-        if (!sources || !Array.isArray(sources) || sources.length === 0) {
+        // Validate sources array - make sure we have a valid array
+        console.log('Screen sources received:', sources)
+        
+        if (!Array.isArray(sources) || sources.length === 0) {
+          console.error('No screen sources available')
           alert('No screen sources available. Please ensure screen recording permissions are granted.')
           return
         }
         
-        // Find entire screen source or use the first available screen
-        const entireScreen = sources.find((s: any) => s.name === 'Entire Screen')
-        const selectedSource = entireScreen || sources[0]
-        
-        if (!selectedSource || !selectedSource.id) {
-          alert('No valid screen source available.')
-          return
-        }
-        
-        const constraints: any = {
-          video: {
-            // @ts-ignore - Electron specific
-            mandatory: {
-              chromeMediaSource: 'desktop',
-              chromeMediaSourceId: selectedSource.id,
-            },
-          },
-        }
-        
-        // Only add audio if user wants it
-        if (includeAudio) {
-          constraints.audio = {
-            // @ts-ignore - Electron specific
-            mandatory: {
-              chromeMediaSource: 'desktop',
-              chromeMediaSourceId: entireScreen.id,
-            },
-          }
-        }
-        
-        stream = await navigator.mediaDevices.getUserMedia(constraints)
+        // Show source picker modal
+        setAvailableSources(sources)
+        setShowSourcePicker(true)
+        return // Don't start recording yet, wait for user to select
       } else if (type === 'webcam') {
         const constraints: any = {
           video: true,
@@ -142,41 +120,111 @@ const RecordingPanel: React.FC = () => {
     }
   }, [includeAudio])
 
-  // Handle source selection for screen recording (removed - using getDisplayMedia instead)
-  const handleSourceSelect = useCallback(async (sourceId: string) => {
-    // No longer needed - browser handles source selection
-  }, [])
+  // Handle source selection for screen recording
+  const handleSourceSelect = useCallback(async (source: any) => {
+    try {
+      setShowSourcePicker(false)
+      
+      const constraints: any = {
+        video: {
+          // @ts-ignore - Electron specific
+          mandatory: {
+            chromeMediaSource: 'desktop',
+            chromeMediaSourceId: source.id,
+          },
+        },
+      }
+      
+      // Only add audio if user wants it
+      if (includeAudio) {
+        constraints.audio = {
+          // @ts-ignore - Electron specific
+          mandatory: {
+            chromeMediaSource: 'desktop',
+            chromeMediaSourceId: source.id,
+          },
+        }
+      }
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints)
+      
+      if (stream) {
+        setRecordingStream(stream)
+        await startRecordingFromStream(stream, 'screen')
+      }
+    } catch (error) {
+      console.error('Error starting recording:', error)
+      alert(`Failed to start recording: ${error.message || 'Unknown error'}`)
+    }
+  }, [includeAudio])
 
   // Start recording from a MediaStream
   const startRecordingFromStream = async (stream: MediaStream, type: 'screen' | 'webcam' | 'pip') => {
     chunksRef.current = []
 
+    // Check stream state
+    console.log('Stream active:', stream.active)
+    console.log('Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled, readyState: t.readyState })))
+
+    // Check supported MIME types
+    const codecs = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
+    let selectedMimeType = 'video/webm'
+    
+    for (const mimeType of codecs) {
+      if (MediaRecorder.isTypeSupported(mimeType)) {
+        selectedMimeType = mimeType
+        console.log('Using MIME type:', mimeType)
+        break
+      }
+    }
+
     const options: MediaRecorderOptions = {
-      mimeType: 'video/webm',
+      mimeType: selectedMimeType,
       videoBitsPerSecond: 2500000, // 2.5 Mbps
     }
+
+    console.log('MediaRecorder options:', options)
 
     const mediaRecorder = new MediaRecorder(stream, options)
     mediaRecorderRef.current = mediaRecorder
 
     mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
+      if (event.data && event.data.size > 0) {
+        console.log('Received data chunk:', event.data.size, 'bytes')
         chunksRef.current.push(event.data)
       }
     }
 
     mediaRecorder.onerror = (event) => {
       console.error('Recording error:', event)
+      alert('Recording error occurred. Please try again.')
     }
 
-    mediaRecorder.start(100) // Collect data every 100ms
-    setIsRecording(true)
-    setRecordingType(type)
+    mediaRecorder.onstart = () => {
+      console.log('MediaRecorder started')
+    }
+
+    mediaRecorder.onstop = () => {
+      console.log('MediaRecorder stopped. Total chunks:', chunksRef.current.length)
+    }
+
+    try {
+      mediaRecorder.start(100) // Collect data every 100ms
+      console.log('MediaRecorder.start() called')
+      setIsRecording(true)
+      setRecordingType(type)
+    } catch (error) {
+      console.error('Error starting MediaRecorder:', error)
+      alert('Failed to start recording: ' + error.message)
+    }
   }
 
   // Stop recording
   const stopRecording = useCallback(async () => {
     try {
+      console.log('Stopping recording...')
+      console.log('Chunks before stop:', chunksRef.current.length)
+      
       // Stop recording first
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop()
@@ -184,26 +232,53 @@ const RecordingPanel: React.FC = () => {
         // Wait for recording to fully stop
         await new Promise((resolve) => {
           if (mediaRecorderRef.current) {
-            mediaRecorderRef.current.onstop = resolve
+            mediaRecorderRef.current.onstop = () => {
+              console.log('MediaRecorder stopped')
+              resolve(undefined)
+            }
           } else {
             resolve(undefined)
           }
         })
       }
 
+      console.log('Chunks after stop:', chunksRef.current.length)
+
       // Stop all media tracks
       if (recordingStream) {
-        recordingStream.getTracks().forEach(track => track.stop())
+        recordingStream.getTracks().forEach(track => {
+          track.stop()
+          console.log('Stopped track:', track.kind)
+        })
         setRecordingStream(null)
       }
 
-      // Wait a moment for final data
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Wait for final data
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      console.log('Final chunks:', chunksRef.current.length, 'chunks')
+      console.log('Total size:', chunksRef.current.reduce((sum, chunk) => sum + chunk.size, 0), 'bytes')
+
+      if (chunksRef.current.length === 0) {
+        console.error('No chunks recorded')
+        alert('No recording data to save. The stream may not have been active.')
+        setIsRecording(false)
+        setRecordingType(null)
+        chunksRef.current = []
+        mediaRecorderRef.current = null
+        return
+      }
 
       const blob = new Blob(chunksRef.current, { type: 'video/webm' })
+      console.log('Blob created:', blob.size, 'bytes')
       
       if (blob.size === 0) {
+        console.error('Blob size is zero')
         alert('No recording data to save')
+        setIsRecording(false)
+        setRecordingType(null)
+        chunksRef.current = []
+        mediaRecorderRef.current = null
         return
       }
 
@@ -219,6 +294,8 @@ const RecordingPanel: React.FC = () => {
 
       // Cleanup
       setTimeout(() => URL.revokeObjectURL(url), 100)
+      
+      console.log('Recording saved successfully')
     } catch (error) {
       console.error('Error saving recording:', error)
       alert('Failed to save recording: ' + error.message)
@@ -281,6 +358,43 @@ const RecordingPanel: React.FC = () => {
               Screen + Webcam
             </button>
           </div>
+
+          {/* Source Picker Modal */}
+          {showSourcePicker && (
+            <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50" onClick={() => setShowSourcePicker(false)}>
+              <div className="bg-dark-secondary rounded-lg p-6 max-w-4xl w-full mx-4 border-2 border-gray-700 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
+                  <svg className="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M9.75 17L9 20l-1 1h8l-1-1-1.75-3M3 13h18M4 17h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v11a1 1 0 001 1z" />
+                  </svg>
+                  Select Screen or Window to Record
+                </h3>
+                <p className="text-sm text-gray-400 mb-4">Choose what you want to record</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                  {availableSources.map((source) => (
+                    <button
+                      key={source.id}
+                      onClick={() => handleSourceSelect(source)}
+                      className="p-3 border-2 border-gray-700 hover:border-red-500 rounded-lg transition-all hover:transform hover:scale-105 bg-dark group"
+                    >
+                      <img 
+                        src={source.thumbnail.toDataURL()} 
+                        alt={source.name} 
+                        className="w-full h-32 object-cover rounded mb-2 group-hover:opacity-80 transition-opacity"
+                      />
+                      <p className="text-xs text-gray-300 truncate text-center">{source.name}</p>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setShowSourcePicker(false)}
+                  className="mt-4 w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <div className="flex items-center justify-center gap-2 text-red-500">
