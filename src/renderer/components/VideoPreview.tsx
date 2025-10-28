@@ -150,7 +150,7 @@ const VideoPreview: React.FC = () => {
     setPlaying(false)
   }, [setCurrentTime, setPlaying])
 
-  // Calculate fade opacity
+  // Calculate fade opacity (legacy fadeIn/fadeOut)
   const getFadeOpacity = () => {
     if (!currentClip || !state.isPlaying) return 1
     
@@ -169,7 +169,101 @@ const VideoPreview: React.FC = () => {
     return 1
   }
 
+  // Calculate transition effects (new transitionIn/transitionOut)
+  const getTransitionEffects = () => {
+    if (!currentClip) return { opacity: 1, transform: 'none', filter: 'none', scale: 1 }
+    
+    const timeInClip = state.currentTime - currentClip.offset
+    const transitionDuration = currentClip.transitionDuration || 500
+    const transitionIn = currentClip.transitionIn || 'none'
+    const transitionOut = currentClip.transitionOut || 'none'
+    
+    const effects = { opacity: 1, transform: 'none', filter: 'none', scale: 1 }
+    
+    // Transition In
+    if (timeInClip < transitionDuration && transitionIn !== 'none') {
+      const progress = timeInClip / transitionDuration
+      
+      switch (transitionIn) {
+        case 'fade':
+          effects.opacity = progress
+          break
+        case 'slide-left':
+          effects.transform = `translateX(${(1 - progress) * 100}%)`
+          effects.opacity = progress
+          break
+        case 'slide-right':
+          effects.transform = `translateX(${-(1 - progress) * 100}%)`
+          effects.opacity = progress
+          break
+        case 'slide-up':
+          effects.transform = `translateY(${(1 - progress) * 100}%)`
+          effects.opacity = progress
+          break
+        case 'slide-down':
+          effects.transform = `translateY(${-(1 - progress) * 100}%)`
+          effects.opacity = progress
+          break
+        case 'zoom-in':
+          effects.scale = 0.5 + (progress * 0.5)
+          effects.opacity = progress
+          break
+        case 'zoom-out':
+          effects.scale = 1 + ((1 - progress) * 0.5)
+          effects.opacity = progress
+          break
+        case 'blur':
+          effects.filter = `blur(${(1 - progress) * 10}px)`
+          effects.opacity = progress
+          break
+      }
+    }
+    
+    // Transition Out
+    const transitionOutStart = currentClip.duration - transitionDuration
+    if (timeInClip > transitionOutStart && transitionOut !== 'none') {
+      const progress = (timeInClip - transitionOutStart) / transitionDuration
+      
+      switch (transitionOut) {
+        case 'fade':
+          effects.opacity = Math.min(effects.opacity, 1 - progress)
+          break
+        case 'slide-left':
+          effects.transform = `translateX(${progress * 100}%)`
+          effects.opacity = Math.min(effects.opacity, 1 - progress)
+          break
+        case 'slide-right':
+          effects.transform = `translateX(${-progress * 100}%)`
+          effects.opacity = Math.min(effects.opacity, 1 - progress)
+          break
+        case 'slide-up':
+          effects.transform = `translateY(${progress * 100}%)`
+          effects.opacity = Math.min(effects.opacity, 1 - progress)
+          break
+        case 'slide-down':
+          effects.transform = `translateY(${-progress * 100}%)`
+          effects.opacity = Math.min(effects.opacity, 1 - progress)
+          break
+        case 'zoom-in':
+          effects.scale = 1 + (progress * 0.5)
+          effects.opacity = Math.min(effects.opacity, 1 - progress)
+          break
+        case 'zoom-out':
+          effects.scale = 1 - (progress * 0.5)
+          effects.opacity = Math.min(effects.opacity, 1 - progress)
+          break
+        case 'blur':
+          effects.filter = `blur(${progress * 10}px)`
+          effects.opacity = Math.min(effects.opacity, 1 - progress)
+          break
+      }
+    }
+    
+    return effects
+  }
+
   const fadeOpacity = getFadeOpacity()
+  const transitionEffects = getTransitionEffects()
 
   // Get CSS filter for video effects
   const getVideoFilter = () => {
@@ -262,9 +356,10 @@ const VideoPreview: React.FC = () => {
               muted={false}
               playsInline={true}
               style={{ 
-                opacity: fadeOpacity, 
-                transition: 'opacity 0.1s linear',
-                filter: videoFilter
+                opacity: transitionEffects.opacity !== 1 ? transitionEffects.opacity : fadeOpacity,
+                transform: transitionEffects.transform !== 'none' ? transitionEffects.transform : (transitionEffects.scale !== 1 ? `scale(${transitionEffects.scale})` : 'none'),
+                filter: transitionEffects.filter !== 'none' ? transitionEffects.filter : videoFilter,
+                transition: 'opacity 0.1s linear, transform 0.1s linear, filter 0.1s linear',
               }}
             />
             
