@@ -31,6 +31,7 @@ const MediaLibrary: React.FC = () => {
           thumbnail: result.thumbnailPath,
           speed: 1, // Normal speed by default
           volume: 1, // 100% volume by default
+          muted: false, // Video audio not muted by default
           fadeIn: 0, // No fade in by default
           fadeOut: 0, // No fade out by default
           brightness: 0, // No brightness adjustment by default

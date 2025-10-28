@@ -29,6 +29,7 @@ export interface Clip {
   thumbnail?: string
   speed: number // 0.25x, 0.5x, 1x (normal), 1.5x, 2x
   volume: number // 0 to 1 (0% to 100%)
+  muted?: boolean // Whether video audio is muted
   fadeIn?: number // Duration of fade in transition in ms
   fadeOut?: number // Duration of fade out transition in ms
   transitionIn?: TransitionType // Transition when clip starts

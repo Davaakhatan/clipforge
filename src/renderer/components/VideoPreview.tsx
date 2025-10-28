@@ -3,6 +3,7 @@ import { useProject } from '../context/ProjectContext'
 
 const VideoPreview: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const audioRefs = useRef<HTMLAudioElement[]>([])
   const { state, setCurrentTime, setPlaying, updateTextOverlay, saveHistory, setTextEditing } = useProject()
   const isSeekingRef = useRef(false)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
@@ -16,6 +17,15 @@ const VideoPreview: React.FC = () => {
   const currentClip = state.tracks
     .flatMap(track => track.clips)
     .find(clip => {
+      const startTime = clip.offset
+      const endTime = startTime + clip.duration
+      return state.currentTime >= startTime && state.currentTime <= endTime
+    })
+
+  // Get currently playing audio clips
+  const currentAudioClips = state.audioTracks
+    .flatMap(track => track.clips)
+    .filter(clip => {
       const startTime = clip.offset
       const endTime = startTime + clip.duration
       return state.currentTime >= startTime && state.currentTime <= endTime
@@ -106,6 +116,38 @@ const VideoPreview: React.FC = () => {
       video.currentTime = timeInClip / 1000
     }
   }, [state.currentTime, currentClip, state.isPlaying])
+
+  // Sync audio tracks with video playback
+  useEffect(() => {
+    currentAudioClips.forEach((clip, index) => {
+      let audioEl = audioRefs.current[index]
+      if (!audioEl) {
+        audioEl = document.createElement('audio')
+        audioEl.src = `file://${clip.filePath}`
+        audioRefs.current[index] = audioEl
+      }
+
+      const timeInClip = state.currentTime - clip.offset
+      if (timeInClip >= 0 && timeInClip <= clip.duration) {
+        audioEl.currentTime = timeInClip / 1000
+        audioEl.volume = clip.volume
+        if (state.isPlaying) {
+          audioEl.play()
+        } else {
+          audioEl.pause()
+        }
+      } else {
+        audioEl.pause()
+      }
+    })
+
+    // Pause audio clips that are no longer playing
+    for (let i = currentAudioClips.length; i < audioRefs.current.length; i++) {
+      if (audioRefs.current[i]) {
+        audioRefs.current[i].pause()
+      }
+    }
+  }, [currentAudioClips, state.currentTime, state.isPlaying])
 
   // Sync video currentTime with playhead position when play state changes
   useEffect(() => {
@@ -353,7 +395,7 @@ const VideoPreview: React.FC = () => {
               onPlay={() => setPlaying(true)}
               className="w-full h-full object-contain"
               controls={false}
-              muted={false}
+              muted={currentClip.muted || false}
               playsInline={true}
               style={{ 
                 opacity: transitionEffects.opacity !== 1 ? transitionEffects.opacity : fadeOpacity,

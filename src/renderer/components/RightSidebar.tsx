@@ -172,6 +172,31 @@ const RightSidebar: React.FC = () => {
               </div>
             </div>
 
+            {/* Mute Video Audio Control */}
+            <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M3.63 3.63a.996.996 0 000 1.41L7.29 8.7 7 9H4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71v-4.67l5.89 5.89a.996.996 0 101.41-1.41L5.05 3.63c-.39-.39-1.02-.39-1.42 0zm5.8 5.8l-1.39 1.39 4.6 4.6v-2.22l2.81 2.81c.28-.95.13-2.12-.53-3.12L13 8.44V5.16l0 0 3.46 2.26c.26.17.51.31.77.44 1.12.57 1.73 1.04 2.01 1.3L21 12l-4.37 3.71-.92.91C15.16 16.3 14.28 16 13.37 16h-.37l-3.77-2.57z"/>
+                  </svg>
+                  <label className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Video Audio</label>
+                </div>
+                <button
+                  onClick={() => {
+                    updateClip(selectedClip.id, { muted: !selectedClip.muted })
+                    saveHistory()
+                  }}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 ${
+                    selectedClip.muted
+                      ? 'bg-red-600 text-white shadow-lg'
+                      : 'bg-green-600 text-white shadow-lg'
+                  }`}
+                >
+                  {selectedClip.muted ? '🔇 Muted' : '🔊 On'}
+                </button>
+              </div>
+            </div>
+
             {/* Fade Control */}
             <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
               <div className="flex items-center gap-2 mb-3">
