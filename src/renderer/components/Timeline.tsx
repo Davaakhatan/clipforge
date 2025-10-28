@@ -1,8 +1,9 @@
 import React, { useRef, useEffect, useCallback, useState, MouseEvent as ReactMouseEvent } from 'react'
-import { useProject, Clip } from '../context/ProjectContext'
+import { useProject, Clip, TextOverlay } from '../context/ProjectContext'
 
 const Timeline: React.FC = () => {
-  const { state, setCurrentTime, removeClip, updateClip, saveHistory, setSelectedClipId, setZoom } = useProject()
+  const { state, setCurrentTime, removeClip, updateClip, saveHistory, setSelectedClipId, setZoom, removeTextOverlay } = useProject()
+  const [selectedTextOverlay, setSelectedTextOverlay] = useState<{ clipId: string; overlayId: string } | null>(null)
   const zoom = state.zoom
   const selectedClipId = state.selectedClipId
   const [isDraggingClip, setIsDraggingClip] = useState(false)
@@ -38,18 +39,30 @@ const Timeline: React.FC = () => {
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Delete key to remove selected clip
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedClipId) {
+      // Delete key - check for text overlay first, then clip
+      if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault()
-        removeClip(selectedClipId)
-        setSelectedClipId(null)
-        saveHistory() // Save state for undo/redo
+        
+        // If a text overlay is selected, delete it
+        if (selectedTextOverlay) {
+          removeTextOverlay(selectedTextOverlay.clipId, selectedTextOverlay.overlayId)
+          setSelectedTextOverlay(null)
+          saveHistory()
+          return
+        }
+        
+        // Otherwise delete the selected clip
+        if (selectedClipId) {
+          removeClip(selectedClipId)
+          setSelectedClipId(null)
+          saveHistory()
+        }
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedClipId, removeClip, saveHistory])
+  }, [selectedClipId, selectedTextOverlay, removeClip, removeTextOverlay, saveHistory])
 
   // Adaptive zoom: zoom 1.0 = fit to viewport, higher = more detail
   const pixelsPerSecond = (viewportWidth * zoom) / totalDuration
@@ -328,6 +341,96 @@ const Timeline: React.FC = () => {
           </div>
         </div>
 
+        {/* Text Overlays Track */}
+        {(() => {
+          // Collect all text overlays from all clips
+          const allTextOverlays: { clip: Clip; overlay: TextOverlay }[] = []
+          state.clips.forEach(clip => {
+            if (clip.textOverlays) {
+              clip.textOverlays.forEach(overlay => {
+                allTextOverlays.push({ clip, overlay })
+              })
+            }
+          })
+
+          return allTextOverlays.length > 0 ? (
+            <div className="h-24 border-b border-gray-800 bg-dark flex relative">
+              {/* Track Header */}
+              <div className="w-20 border-r border-gray-800 bg-dark-tertiary flex flex-col items-center justify-center text-xs text-gray-400">
+                <div>📝 Text</div>
+              </div>
+
+              {/* Track Content */}
+              <div
+                className="flex-1 relative bg-dark overflow-visible cursor-crosshair"
+                onClick={handleTimelineClick}
+                style={{ minWidth: `${Math.max(timeToPx(totalDuration), 800)}px` }}
+              >
+                {allTextOverlays.map(({ clip, overlay }) => {
+                  const absoluteStart = clip.offset + overlay.startTime
+                  const duration = overlay.endTime - overlay.startTime
+                  const isSelected = selectedTextOverlay?.clipId === clip.id && selectedTextOverlay?.overlayId === overlay.id
+
+                  return (
+                    <div
+                      key={overlay.id}
+                      className={`absolute h-16 top-2 rounded-lg border-2 flex items-center justify-center cursor-pointer shadow-lg transition-all ${
+                        isSelected
+                          ? 'border-yellow-400 bg-yellow-400 bg-opacity-20 ring-2 ring-yellow-300'
+                          : 'border-yellow-600 bg-yellow-600 bg-opacity-10 hover:bg-opacity-20'
+                      }`}
+                      style={{
+                        left: `${timeToPx(absoluteStart)}px`,
+                        width: `${Math.max(timeToPx(duration), 100)}px`,
+                        minWidth: '100px',
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedTextOverlay({ clipId: clip.id, overlayId: overlay.id })
+                        setSelectedClipId(clip.id) // Also select the parent clip
+                      }}
+                    >
+                      {/* Text preview */}
+                      <div className="px-2 py-1 flex items-center gap-2">
+                        <span className="text-lg">📝</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-white truncate">
+                            {overlay.text}
+                          </p>
+                          <p className="text-[10px] text-gray-400">
+                            {formatTime(duration)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Delete button */}
+                      {isSelected && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeTextOverlay(clip.id, overlay.id)
+                            setSelectedTextOverlay(null)
+                            saveHistory()
+                          }}
+                          className="absolute -top-2 -right-2 w-5 h-5 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white text-xs shadow-lg"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+
+                {/* Playhead */}
+                <div
+                  className="absolute top-0 bottom-0 w-1 bg-red-500 z-20"
+                  style={{ left: `${timeToPx(state.currentTime)}px` }}
+                />
+              </div>
+            </div>
+          ) : null
+        })()}
+
         {/* Timeline Tracks */}
         {state.tracks.map(track => (
           <div key={track.id} className="h-32 border-b border-gray-800 bg-dark flex relative">
@@ -522,7 +625,7 @@ const Timeline: React.FC = () => {
 
       {/* Footer Tips */}
       <div className="px-4 py-2 border-t border-gray-800 bg-dark text-xs text-gray-500">
-        💡 Drag white trim bars to trim • <kbd className="px-1 bg-gray-800 rounded">Cmd/Ctrl+Z</kbd> Undo • <kbd className="px-1 bg-gray-800 rounded">S</kbd> Split • <kbd className="px-1 bg-gray-800 rounded">Space</kbd> Play/Pause
+        💡 Drag white trim bars to trim • <kbd className="px-1 bg-gray-800 rounded">Delete</kbd> Remove • <kbd className="px-1 bg-gray-800 rounded">Cmd/Ctrl+Z</kbd> Undo • <kbd className="px-1 bg-gray-800 rounded">S</kbd> Split • <kbd className="px-1 bg-gray-800 rounded">Space</kbd> Play/Pause
       </div>
     </div>
   )
