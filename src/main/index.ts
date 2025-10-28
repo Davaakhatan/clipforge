@@ -102,6 +102,18 @@ ipcMain.handle('importVideo', async (event, { filePath }) => {
   }
 })
 
+// Audio processing handlers
+ipcMain.handle('importAudio', async (event, { filePath }) => {
+  try {
+    const metadata = await ffmpegService.getMetadata(filePath)
+    
+    return { success: true, metadata }
+  } catch (error) {
+    console.error('Error importing audio:', error)
+    return { success: false, error: error.message }
+  }
+})
+
 ipcMain.handle('exportVideo', async (event, { clips, outputPath }) => {
   try {
     await ffmpegService.exportProject(clips, outputPath, (progress) => {
@@ -139,6 +151,22 @@ ipcMain.handle('showOpenDialog', async () => {
     properties: ['openFile', 'multiSelections'],
     filters: [
       { name: 'Video Files', extensions: ['mp4', 'mov', 'avi', 'mkv', 'webm'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+  })
+  
+  if (!result.canceled) {
+    return result.filePaths
+  }
+  return []
+})
+
+ipcMain.handle('showOpenDialogAudio', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Import Audio',
+    properties: ['openFile', 'multiSelections'],
+    filters: [
+      { name: 'Audio Files', extensions: ['mp3', 'wav', 'aac', 'm4a', 'flac', 'ogg'] },
       { name: 'All Files', extensions: ['*'] },
     ],
   })
