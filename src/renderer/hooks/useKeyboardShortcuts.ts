@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react'
 import { useProject } from '../context/ProjectContext'
 
 export function useKeyboardShortcuts() {
-  const { state, setCurrentTime, setPlaying, removeClip, splitClip, undo, redo, canUndo, canRedo } = useProject()
+  const { state, setCurrentTime, setPlaying, removeClip, removeAudioClip, splitClip, splitAudioClip, duplicateAudioClip, undo, redo, canUndo, canRedo } = useProject()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -56,7 +56,28 @@ export function useKeyboardShortcuts() {
       if ((e.code === 'Delete' || e.code === 'Backspace') && !state.isTextEditing && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
         if (state.selectedClipId) {
           e.preventDefault()
-          removeClip(state.selectedClipId)
+          // Check if it's a video clip or audio clip
+          const isVideoClip = state.tracks.some(track => track.clips.some(clip => clip.id === state.selectedClipId))
+          const isAudioClip = state.audioTracks.some(track => track.clips.some(clip => clip.id === state.selectedClipId))
+          
+          if (isVideoClip) {
+            removeClip(state.selectedClipId)
+          } else if (isAudioClip) {
+            removeAudioClip(state.selectedClipId)
+          }
+        }
+        return
+      }
+
+      // Ctrl/Cmd + D: Duplicate selected audio clip
+      if ((e.ctrlKey || e.metaKey) && e.code === 'KeyD') {
+        e.preventDefault()
+        if (state.selectedClipId) {
+          // Check if it's an audio clip
+          const isAudioClip = state.audioTracks.some(track => track.clips.some(clip => clip.id === state.selectedClipId))
+          if (isAudioClip) {
+            duplicateAudioClip(state.selectedClipId)
+          }
         }
         return
       }
@@ -65,8 +86,8 @@ export function useKeyboardShortcuts() {
       if (e.code === 'KeyS' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault()
         
-        // Find clip at current playhead position
-        const clipAtPlayhead = state.tracks
+        // Find video clip at current playhead position
+        const videoClipAtPlayhead = state.tracks
           .flatMap(track => track.clips)
           .find(clip => {
             const startTime = clip.offset
@@ -74,8 +95,20 @@ export function useKeyboardShortcuts() {
             return state.currentTime >= startTime && state.currentTime <= endTime && state.currentTime > startTime && state.currentTime < endTime
           })
 
-        if (clipAtPlayhead) {
-          splitClip(clipAtPlayhead.id, state.currentTime)
+        // Find audio clip at current playhead position
+        const audioClipAtPlayhead = state.audioTracks
+          .flatMap(track => track.clips)
+          .find(clip => {
+            const startTime = clip.offset
+            const endTime = startTime + clip.duration
+            return state.currentTime >= startTime && state.currentTime <= endTime && state.currentTime > startTime && state.currentTime < endTime
+          })
+
+        if (videoClipAtPlayhead) {
+          splitClip(videoClipAtPlayhead.id, state.currentTime)
+          setCurrentTime(state.currentTime) // Keep playhead at split point
+        } else if (audioClipAtPlayhead) {
+          splitAudioClip(audioClipAtPlayhead.id, state.currentTime)
           setCurrentTime(state.currentTime) // Keep playhead at split point
         }
         return
@@ -87,6 +120,6 @@ export function useKeyboardShortcuts() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [state.isPlaying, state.currentTime, state.tracks, state.selectedClipId, state.isTextEditing, setPlaying, setCurrentTime, splitClip, removeClip, undo, redo, canUndo, canRedo])
+  }, [state.isPlaying, state.currentTime, state.tracks, state.audioTracks, state.selectedClipId, state.isTextEditing, setPlaying, setCurrentTime, splitClip, splitAudioClip, removeClip, removeAudioClip, duplicateAudioClip, undo, redo, canUndo, canRedo])
 }
 

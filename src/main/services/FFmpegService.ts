@@ -14,6 +14,14 @@ export interface VideoMetadata {
   format: string
 }
 
+export interface AudioMetadata {
+  duration: number
+  size: number
+  format: string
+  sampleRate?: number
+  channels?: number
+}
+
 class FFmpegService {
   /**
    * Get video metadata (duration, resolution, file size)
@@ -41,6 +49,37 @@ class FFmpegService {
           height: videoStream.height || 0,
           size: stats.size,
           format: metadata.format.format_name || '',
+        })
+      })
+    })
+  }
+
+  /**
+   * Get audio metadata (duration, file size, format, sample rate, channels)
+   */
+  getAudioMetadata(filePath: string): Promise<AudioMetadata> {
+    return new Promise((resolve, reject) => {
+      const stats = fs.statSync(filePath)
+      
+      ffmpeg.ffprobe(filePath, (err, metadata) => {
+        if (err) {
+          reject(err)
+          return
+        }
+
+        const audioStream = metadata.streams.find(stream => stream.codec_type === 'audio')
+        
+        if (!audioStream) {
+          reject(new Error('No audio stream found'))
+          return
+        }
+
+        resolve({
+          duration: metadata.format.duration || 0,
+          size: stats.size,
+          format: metadata.format.format_name || '',
+          sampleRate: audioStream.sample_rate || undefined,
+          channels: audioStream.channels || undefined,
         })
       })
     })

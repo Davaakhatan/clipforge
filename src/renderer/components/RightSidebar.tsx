@@ -1,11 +1,16 @@
 import React from 'react'
 import { useProject, TextOverlay } from '../context/ProjectContext'
 import { v4 as uuidv4 } from 'uuid'
+import VolumeAutomation from './VolumeAutomation'
+import AudioMixer from './AudioMixer'
+import AudioSync from './AudioSync'
+import BatchOperations from './BatchOperations'
 
 const RightSidebar: React.FC = () => {
-  const { state, setPlaying, setCurrentTime, updateClip, addTextOverlay, updateTextOverlay, saveHistory } = useProject()
+  const { state, setPlaying, setCurrentTime, updateClip, addTextOverlay, updateTextOverlay, saveHistory, updateAudioClip, splitClip, splitAudioClip, duplicateAudioClip, normalizeAudioClip, setCrossfadeAudioClip, setAudioEffects, addVolumeKeyframe, removeVolumeKeyframe, updateVolumeKeyframe, setAudioSyncOffset, updateAudioTrack, setMasterVolume, setMasterMute, setSelectedClips, addToSelection, removeFromSelection, clearSelection, batchUpdateClips, batchUpdateAudioClips } = useProject()
 
   const selectedClip = state.clips.find(c => c.id === state.selectedClipId)
+  const selectedAudioClip = state.audioClips.find(c => c.id === state.selectedClipId)
 
   const handlePlayPause = () => {
     setPlaying(!state.isPlaying)
@@ -23,10 +28,50 @@ const RightSidebar: React.FC = () => {
     return `${minutes}:${String(seconds).padStart(2, '0')}`
   }
 
+  const handleSplitClip = () => {
+    if (selectedClip) {
+      splitClip(selectedClip.id, state.currentTime)
+      saveHistory()
+    }
+  }
+
+  const handleSplitAudioClip = () => {
+    if (selectedAudioClip) {
+      splitAudioClip(selectedAudioClip.id, state.currentTime)
+      saveHistory()
+    }
+  }
+
+  const handleDuplicateAudioClip = () => {
+    if (selectedAudioClip) {
+      duplicateAudioClip(selectedAudioClip.id)
+      saveHistory()
+    }
+  }
+
+  const handleNormalizeAudioClip = () => {
+    if (selectedAudioClip) {
+      normalizeAudioClip(selectedAudioClip.id, 0.8) // Normalize to 80% volume
+      saveHistory()
+    }
+  }
+
   const totalDuration = state.clips.reduce((sum, clip) => sum + clip.duration, 0)
 
   return (
     <div className="w-full h-full border-l border-gray-800 bg-dark-secondary flex flex-col overflow-auto">
+      {/* Batch Operations Section */}
+      <div className="p-4 border-b border-gray-800">
+        <BatchOperations
+          selectedClipIds={state.selectedClipIds}
+          clips={state.clips}
+          audioClips={state.audioClips}
+          onBatchUpdateClips={batchUpdateClips}
+          onBatchUpdateAudioClips={batchUpdateAudioClips}
+          onClearSelection={clearSelection}
+        />
+      </div>
+
       {/* Playback Controls Section */}
       <div className="p-4 border-b border-gray-800">
         <h3 className="text-sm font-semibold text-gray-400 mb-3">Playback</h3>
@@ -451,10 +496,22 @@ const RightSidebar: React.FC = () => {
               </svg>
               <span>Add Text Overlay</span>
             </button>
+
+            {/* Split Video Button */}
+            <button
+              onClick={handleSplitClip}
+              className="w-full px-4 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white text-sm font-bold rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+              title="Split video at current playhead position"
+            >
+              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Split Video</span>
+            </button>
             
             {/* Helper text */}
             <p className="text-xs text-gray-500 text-center mt-2">
-              💡 Double-click to edit • Drag to move
+              💡 Double-click to edit • Drag to move • Split at playhead
             </p>
             
             {/* Text Controls - Show if there are text overlays */}
@@ -543,10 +600,662 @@ const RightSidebar: React.FC = () => {
         </div>
       )}
 
+      {/* Audio Clip Properties Section - Only show when audio clip is selected */}
+      {selectedAudioClip && (
+        <div className="p-5 border-b border-gray-800">
+          <div className="flex items-center gap-2 mb-5">
+            <svg className="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            </svg>
+            <h3 className="text-sm font-semibold text-white">Audio Properties</h3>
+            <div className="ml-auto text-xs text-green-400 font-bold">
+              ✓ Selected
+            </div>
+          </div>
+          
+          <div className="space-y-5">
+            {/* Audio Volume Control */}
+            <div className="bg-gradient-to-br from-pink-800/50 to-purple-800/50 rounded-xl p-4 border border-pink-500/30 backdrop-blur-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <svg className="w-5 h-5 text-pink-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+                <label className="text-xs font-bold text-white uppercase tracking-wider">Volume</label>
+              </div>
+              
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-gray-300">Volume Level</span>
+                  <span className="text-xs text-pink-400 font-bold font-mono">{Math.round(selectedAudioClip.volume * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={selectedAudioClip.volume}
+                  onChange={(e) => {
+                    updateAudioClip(selectedAudioClip.id, { volume: parseFloat(e.target.value) })
+                    saveHistory()
+                  }}
+                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${selectedAudioClip.volume * 100}%, #1f2937 ${selectedAudioClip.volume * 100}%, #1f2937 100%)`
+                  }}
+                />
+                
+                {/* Quick Volume Presets */}
+                <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+                  {[0, 0.25, 0.5, 0.75, 1].map(vol => (
+                    <button
+                      key={vol}
+                      onClick={() => {
+                        updateAudioClip(selectedAudioClip.id, { volume: vol })
+                        saveHistory()
+                      }}
+                      className={`text-[10px] px-2 py-1 rounded transition-colors font-bold min-w-[2.5rem] ${
+                        Math.abs(selectedAudioClip.volume - vol) < 0.01
+                          ? 'bg-pink-600 text-white'
+                          : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      }`}
+                      title={vol === 0 ? 'Mute' : `${Math.round(vol * 100)}%`}
+                    >
+                      {vol === 0 ? '🔇' : `${Math.round(vol * 100)}%`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+                {/* Fade Controls */}
+                <div className="mt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg className="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2M7 4h10M7 4l-2 16h14l-2-16M9 9v6M15 9v6" />
+                    </svg>
+                    <span className="text-sm font-semibold text-gray-300">Fade Effects</span>
+                  </div>
+                  
+                  {/* Fade In */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-gray-400">Fade In</span>
+                      <span className="text-xs text-pink-400 font-bold">
+                        {selectedAudioClip.fadeIn ? `${selectedAudioClip.fadeIn}ms` : '0ms'}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="2000"
+                      step="100"
+                      value={selectedAudioClip.fadeIn || 0}
+                      onChange={(e) => {
+                        updateAudioClip(selectedAudioClip.id, { fadeIn: parseInt(e.target.value) })
+                        saveHistory()
+                      }}
+                      className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                      style={{
+                        background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${((selectedAudioClip.fadeIn || 0) / 2000) * 100}%, #1f2937 ${((selectedAudioClip.fadeIn || 0) / 2000) * 100}%, #1f2937 100%)`
+                      }}
+                    />
+                  </div>
+
+                  {/* Fade Out */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-gray-400">Fade Out</span>
+                      <span className="text-xs text-pink-400 font-bold">
+                        {selectedAudioClip.fadeOut ? `${selectedAudioClip.fadeOut}ms` : '0ms'}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="2000"
+                      step="100"
+                      value={selectedAudioClip.fadeOut || 0}
+                      onChange={(e) => {
+                        updateAudioClip(selectedAudioClip.id, { fadeOut: parseInt(e.target.value) })
+                        saveHistory()
+                      }}
+                      className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                      style={{
+                        background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${((selectedAudioClip.fadeOut || 0) / 2000) * 100}%, #1f2937 ${((selectedAudioClip.fadeOut || 0) / 2000) * 100}%, #1f2937 100%)`
+                      }}
+                    />
+                  </div>
+
+                  {/* Quick Fade Presets */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {[
+                      { label: 'None', fadeIn: 0, fadeOut: 0 },
+                      { label: 'Quick', fadeIn: 200, fadeOut: 200 },
+                      { label: 'Smooth', fadeIn: 500, fadeOut: 500 },
+                      { label: 'Long', fadeIn: 1000, fadeOut: 1000 }
+                    ].map(preset => (
+                      <button
+                        key={preset.label}
+                        onClick={() => {
+                          updateAudioClip(selectedAudioClip.id, { 
+                            fadeIn: preset.fadeIn, 
+                            fadeOut: preset.fadeOut 
+                          })
+                          saveHistory()
+                        }}
+                        className={`text-[10px] px-2 py-1 rounded transition-colors font-bold min-w-[2.5rem] ${
+                          (selectedAudioClip.fadeIn || 0) === preset.fadeIn && 
+                          (selectedAudioClip.fadeOut || 0) === preset.fadeOut
+                            ? 'bg-pink-600 text-white'
+                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Crossfade Controls */}
+                <div className="bg-gradient-to-br from-blue-800/50 to-cyan-800/50 rounded-xl p-4 border border-blue-500/30 backdrop-blur-sm mt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    <label className="text-xs font-bold text-white uppercase tracking-wider">Crossfade</label>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {/* Crossfade In */}
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-gray-400">Crossfade In</span>
+                        <span className="text-xs text-blue-400 font-bold">
+                          {selectedAudioClip.crossfadeIn ? `${selectedAudioClip.crossfadeIn}ms` : '0ms'}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="2000"
+                        step="100"
+                        value={selectedAudioClip.crossfadeIn || 0}
+                        onChange={(e) => {
+                          setCrossfadeAudioClip(selectedAudioClip.id, parseInt(e.target.value), selectedAudioClip.crossfadeOut)
+                          saveHistory()
+                        }}
+                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                        style={{
+                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((selectedAudioClip.crossfadeIn || 0) / 2000) * 100}%, #1f2937 ${((selectedAudioClip.crossfadeIn || 0) / 2000) * 100}%, #1f2937 100%)`
+                        }}
+                      />
+                    </div>
+
+                    {/* Crossfade Out */}
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-gray-400">Crossfade Out</span>
+                        <span className="text-xs text-blue-400 font-bold">
+                          {selectedAudioClip.crossfadeOut ? `${selectedAudioClip.crossfadeOut}ms` : '0ms'}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="2000"
+                        step="100"
+                        value={selectedAudioClip.crossfadeOut || 0}
+                        onChange={(e) => {
+                          setCrossfadeAudioClip(selectedAudioClip.id, selectedAudioClip.crossfadeIn, parseInt(e.target.value))
+                          saveHistory()
+                        }}
+                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                        style={{
+                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((selectedAudioClip.crossfadeOut || 0) / 2000) * 100}%, #1f2937 ${((selectedAudioClip.crossfadeOut || 0) / 2000) * 100}%, #1f2937 100%)`
+                        }}
+                      />
+                    </div>
+
+                    {/* Quick Crossfade Presets */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {[
+                        { label: 'None', crossfadeIn: 0, crossfadeOut: 0 },
+                        { label: 'Quick', crossfadeIn: 200, crossfadeOut: 200 },
+                        { label: 'Smooth', crossfadeIn: 500, crossfadeOut: 500 },
+                        { label: 'Long', crossfadeIn: 1000, crossfadeOut: 1000 }
+                      ].map(preset => (
+                        <button
+                          key={preset.label}
+                          onClick={() => {
+                            setCrossfadeAudioClip(selectedAudioClip.id, preset.crossfadeIn, preset.crossfadeOut)
+                            saveHistory()
+                          }}
+                          className={`text-[10px] px-2 py-1 rounded transition-colors font-bold min-w-[2.5rem] ${
+                            (selectedAudioClip.crossfadeIn || 0) === preset.crossfadeIn && 
+                            (selectedAudioClip.crossfadeOut || 0) === preset.crossfadeOut
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              
+              {/* Audio Info */}
+              <div className="bg-gray-900/50 rounded-lg p-3 mt-4 border border-gray-700/30">
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">📝 Name:</span>
+                    <span className="text-gray-300 font-medium truncate">{selectedAudioClip.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">⏱️ Duration:</span>
+                    <span className="text-gray-300 font-mono">{Math.floor(selectedAudioClip.duration / 1000)}s</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">🎵 File:</span>
+                    <span className="text-gray-400 truncate">{selectedAudioClip.filePath.split('/').pop()}</span>
+                  </div>
+                  {selectedAudioClip.normalized && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400">🎚️ Status:</span>
+                      <span className="text-purple-400 font-bold">Normalized</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Audio Effects */}
+              <div className="bg-gradient-to-br from-indigo-800/50 to-purple-800/50 rounded-xl p-4 mt-4 border border-indigo-500/30 backdrop-blur-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <svg className="w-5 h-5 text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                  <label className="text-xs font-bold text-white uppercase tracking-wider">Audio Effects</label>
+                </div>
+                
+                <div className="space-y-4">
+                  {/* Reverb */}
+                  <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-600/30">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                        </svg>
+                        <span className="text-sm font-semibold text-gray-300">Reverb</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedAudioClip.effects?.reverb?.enabled || false}
+                          onChange={(e) => {
+                            const effects = selectedAudioClip.effects || {}
+                            setAudioEffects(selectedAudioClip.id, {
+                              ...effects,
+                              reverb: {
+                                enabled: e.target.checked,
+                                roomSize: effects.reverb?.roomSize || 0.5,
+                                damping: effects.reverb?.damping || 0.5,
+                                wet: effects.reverb?.wet || 0.3,
+                              }
+                            })
+                            saveHistory()
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                      </label>
+                    </div>
+                    
+                    {selectedAudioClip.effects?.reverb?.enabled && (
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-gray-400">Room Size</span>
+                            <span className="text-xs text-indigo-400 font-bold">
+                              {Math.round((selectedAudioClip.effects.reverb.roomSize || 0.5) * 100)}%
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value={selectedAudioClip.effects.reverb.roomSize || 0.5}
+                            onChange={(e) => {
+                              const effects = selectedAudioClip.effects || {}
+                              setAudioEffects(selectedAudioClip.id, {
+                                ...effects,
+                                reverb: {
+                                  ...effects.reverb!,
+                                  roomSize: parseFloat(e.target.value)
+                                }
+                              })
+                              saveHistory()
+                            }}
+                            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                            style={{
+                              background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${(selectedAudioClip.effects.reverb.roomSize || 0.5) * 100}%, #1f2937 ${(selectedAudioClip.effects.reverb.roomSize || 0.5) * 100}%, #1f2937 100%)`
+                            }}
+                          />
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-gray-400">Wet Mix</span>
+                            <span className="text-xs text-indigo-400 font-bold">
+                              {Math.round((selectedAudioClip.effects.reverb.wet || 0.3) * 100)}%
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value={selectedAudioClip.effects.reverb.wet || 0.3}
+                            onChange={(e) => {
+                              const effects = selectedAudioClip.effects || {}
+                              setAudioEffects(selectedAudioClip.id, {
+                                ...effects,
+                                reverb: {
+                                  ...effects.reverb!,
+                                  wet: parseFloat(e.target.value)
+                                }
+                              })
+                              saveHistory()
+                            }}
+                            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                            style={{
+                              background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${(selectedAudioClip.effects.reverb.wet || 0.3) * 100}%, #1f2937 ${(selectedAudioClip.effects.reverb.wet || 0.3) * 100}%, #1f2937 100%)`
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Echo */}
+                  <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-600/30">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span className="text-sm font-semibold text-gray-300">Echo</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedAudioClip.effects?.echo?.enabled || false}
+                          onChange={(e) => {
+                            const effects = selectedAudioClip.effects || {}
+                            setAudioEffects(selectedAudioClip.id, {
+                              ...effects,
+                              echo: {
+                                enabled: e.target.checked,
+                                delay: effects.echo?.delay || 250,
+                                feedback: effects.echo?.feedback || 0.3,
+                                wet: effects.echo?.wet || 0.3,
+                              }
+                            })
+                            saveHistory()
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
+                      </label>
+                    </div>
+                    
+                    {selectedAudioClip.effects?.echo?.enabled && (
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-gray-400">Delay</span>
+                            <span className="text-xs text-cyan-400 font-bold">
+                              {selectedAudioClip.effects.echo.delay || 250}ms
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="50"
+                            max="1000"
+                            step="10"
+                            value={selectedAudioClip.effects.echo.delay || 250}
+                            onChange={(e) => {
+                              const effects = selectedAudioClip.effects || {}
+                              setAudioEffects(selectedAudioClip.id, {
+                                ...effects,
+                                echo: {
+                                  ...effects.echo!,
+                                  delay: parseInt(e.target.value)
+                                }
+                              })
+                              saveHistory()
+                            }}
+                            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                            style={{
+                              background: `linear-gradient(to right, #06b6d4 0%, #06b6d4 ${((selectedAudioClip.effects.echo.delay || 250) - 50) / 9.5}%, #1f2937 ${((selectedAudioClip.effects.echo.delay || 250) - 50) / 9.5}%, #1f2937 100%)`
+                            }}
+                          />
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-gray-400">Feedback</span>
+                            <span className="text-xs text-cyan-400 font-bold">
+                              {Math.round((selectedAudioClip.effects.echo.feedback || 0.3) * 100)}%
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="0.9"
+                            step="0.01"
+                            value={selectedAudioClip.effects.echo.feedback || 0.3}
+                            onChange={(e) => {
+                              const effects = selectedAudioClip.effects || {}
+                              setAudioEffects(selectedAudioClip.id, {
+                                ...effects,
+                                echo: {
+                                  ...effects.echo!,
+                                  feedback: parseFloat(e.target.value)
+                                }
+                              })
+                              saveHistory()
+                            }}
+                            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                            style={{
+                              background: `linear-gradient(to right, #06b6d4 0%, #06b6d4 ${((selectedAudioClip.effects.echo.feedback || 0.3) / 0.9) * 100}%, #1f2937 ${((selectedAudioClip.effects.echo.feedback || 0.3) / 0.9) * 100}%, #1f2937 100%)`
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Distortion */}
+                  <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-600/30">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span className="text-sm font-semibold text-gray-300">Distortion</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedAudioClip.effects?.distortion?.enabled || false}
+                          onChange={(e) => {
+                            const effects = selectedAudioClip.effects || {}
+                            setAudioEffects(selectedAudioClip.id, {
+                              ...effects,
+                              distortion: {
+                                enabled: e.target.checked,
+                                amount: effects.distortion?.amount || 0.5,
+                                wet: effects.distortion?.wet || 0.3,
+                              }
+                            })
+                            saveHistory()
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                      </label>
+                    </div>
+                    
+                    {selectedAudioClip.effects?.distortion?.enabled && (
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-gray-400">Amount</span>
+                            <span className="text-xs text-red-400 font-bold">
+                              {Math.round((selectedAudioClip.effects.distortion.amount || 0.5) * 100)}%
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value={selectedAudioClip.effects.distortion.amount || 0.5}
+                            onChange={(e) => {
+                              const effects = selectedAudioClip.effects || {}
+                              setAudioEffects(selectedAudioClip.id, {
+                                ...effects,
+                                distortion: {
+                                  ...effects.distortion!,
+                                  amount: parseFloat(e.target.value)
+                                }
+                              })
+                              saveHistory()
+                            }}
+                            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                            style={{
+                              background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${(selectedAudioClip.effects.distortion.amount || 0.5) * 100}%, #1f2937 ${(selectedAudioClip.effects.distortion.amount || 0.5) * 100}%, #1f2937 100%)`
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Volume Automation */}
+              <div className="mt-6">
+                <VolumeAutomation
+                clipId={selectedAudioClip.id}
+                duration={selectedAudioClip.duration}
+                keyframes={selectedAudioClip.volumeKeyframes || []}
+                onAddKeyframe={(clipId, keyframe) => {
+                  addVolumeKeyframe(clipId, keyframe)
+                  saveHistory()
+                }}
+                onRemoveKeyframe={(clipId, keyframeTime) => {
+                  removeVolumeKeyframe(clipId, keyframeTime)
+                  saveHistory()
+                }}
+                onUpdateKeyframe={(clipId, keyframeTime, updates) => {
+                  updateVolumeKeyframe(clipId, keyframeTime, updates)
+                  saveHistory()
+                }}
+                currentTime={state.currentTime - selectedAudioClip.offset}
+                />
+              </div>
+
+              {/* Audio Sync */}
+              <div className="mt-6">
+                <AudioSync
+                  clipId={selectedAudioClip.id}
+                  syncOffset={selectedAudioClip.syncOffset || 0}
+                  onSetSyncOffset={(clipId, offset) => {
+                    setAudioSyncOffset(clipId, offset)
+                    saveHistory()
+                  }}
+                />
+              </div>
+
+              {/* Audio Mixer */}
+              <div className="mt-6">
+                <AudioMixer
+                  audioTracks={state.audioTracks}
+                  masterVolume={state.masterVolume}
+                  masterMute={state.masterMute}
+                  onUpdateTrack={(trackId, updates) => {
+                    updateAudioTrack(trackId, updates)
+                    saveHistory()
+                  }}
+                  onSetMasterVolume={(volume) => {
+                    setMasterVolume(volume)
+                    saveHistory()
+                  }}
+                  onSetMasterMute={(mute) => {
+                    setMasterMute(mute)
+                    saveHistory()
+                  }}
+                />
+              </div>
+
+              {/* Audio Action Buttons */}
+              <div className="mt-4 space-y-2">
+                {/* Split Audio Button */}
+                <button
+                  onClick={handleSplitAudioClip}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white text-sm font-bold rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+                  title="Split audio at current playhead position"
+                >
+                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Split Audio</span>
+                </button>
+
+                {/* Duplicate Audio Button */}
+                <button
+                  onClick={handleDuplicateAudioClip}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-sm font-bold rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+                  title="Duplicate this audio clip"
+                >
+                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span>Duplicate Audio</span>
+                </button>
+
+                {/* Normalize Audio Button */}
+                <button
+                  onClick={handleNormalizeAudioClip}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-sm font-bold rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+                  title="Normalize audio to consistent volume level"
+                >
+                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                  </svg>
+                  <span>Normalize Audio</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Empty state when no clip selected */}
-      {!selectedClip && state.clips.length > 0 && (
+      {!selectedClip && !selectedAudioClip && (state.clips.length > 0 || state.audioClips.length > 0) && (
         <div className="p-4 text-center text-gray-400 text-sm">
-          <p>Select a clip to edit its properties</p>
+          <div className="space-y-2">
+            <p>Select a clip to edit its properties</p>
+            {state.audioClips.length > 0 && (
+              <div className="text-xs text-gray-500">
+                <p>🎵 Audio clips available: {state.audioClips.length}</p>
+                <p>Click on an audio clip to see:</p>
+                <p>• Volume controls • Fade effects • Crossfade</p>
+                <p>• Split • Duplicate • Normalize</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

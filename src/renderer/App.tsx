@@ -23,12 +23,12 @@ function AppContent() {
         </div>
 
         {/* Center - Preview (reduced size) */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden max-w-4xl">
           <Preview />
         </div>
 
         {/* Right Sidebar - Controls & Clip Properties (wider) */}
-        <div className="w-80">
+        <div className="w-96 border-l border-gray-800 bg-dark-secondary overflow-y-auto">
           <RightSidebar />
         </div>
       </div>

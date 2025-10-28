@@ -3,7 +3,7 @@ import { useProject } from '../context/ProjectContext'
 
 const VideoPreview: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const audioRefs = useRef<HTMLAudioElement[]>([])
+  const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({})
   const { state, setCurrentTime, setPlaying, updateTextOverlay, saveHistory, setTextEditing } = useProject()
   const isSeekingRef = useRef(false)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
@@ -117,37 +117,151 @@ const VideoPreview: React.FC = () => {
     }
   }, [state.currentTime, currentClip, state.isPlaying])
 
+  // Get volume at specific time using keyframes
+  const getVolumeFromKeyframes = useCallback((clip: any, timeInClip: number) => {
+    if (!clip.volumeKeyframes || clip.volumeKeyframes.length === 0) {
+      return clip.volume
+    }
+
+    // Sort keyframes by time
+    const sortedKeyframes = [...clip.volumeKeyframes].sort((a, b) => a.time - b.time)
+    
+    // Find surrounding keyframes
+    let beforeKeyframe: any = null
+    let afterKeyframe: any = null
+
+    for (let i = 0; i < sortedKeyframes.length; i++) {
+      if (sortedKeyframes[i].time <= timeInClip) {
+        beforeKeyframe = sortedKeyframes[i]
+      }
+      if (sortedKeyframes[i].time >= timeInClip && !afterKeyframe) {
+        afterKeyframe = sortedKeyframes[i]
+        break
+      }
+    }
+
+    // If no keyframes, return base volume
+    if (!beforeKeyframe && !afterKeyframe) return clip.volume
+
+    // If only one keyframe, return its volume
+    if (!beforeKeyframe) return afterKeyframe.volume
+    if (!afterKeyframe) return beforeKeyframe.volume
+
+    // If time matches a keyframe exactly
+    if (beforeKeyframe.time === timeInClip) return beforeKeyframe.volume
+
+    // Linear interpolation between keyframes
+    const timeDiff = afterKeyframe.time - beforeKeyframe.time
+    const volumeDiff = afterKeyframe.volume - beforeKeyframe.volume
+    const progress = (timeInClip - beforeKeyframe.time) / timeDiff
+
+    return beforeKeyframe.volume + (volumeDiff * progress)
+  }, [])
+
   // Sync audio tracks with video playback
   useEffect(() => {
-    currentAudioClips.forEach((clip, index) => {
-      let audioEl = audioRefs.current[index]
+    currentAudioClips.forEach((clip) => {
+      let audioEl = audioRefs.current[clip.id]
       if (!audioEl) {
         audioEl = document.createElement('audio')
         audioEl.src = `file://${clip.filePath}`
-        audioRefs.current[index] = audioEl
+        audioEl.preload = 'metadata' // Only load metadata initially
+        audioEl.crossOrigin = 'anonymous'
+        audioRefs.current[clip.id] = audioEl
       }
 
       const timeInClip = state.currentTime - clip.offset
-      if (timeInClip >= 0 && timeInClip <= clip.duration) {
-        audioEl.currentTime = timeInClip / 1000
-        audioEl.volume = clip.volume
-        if (state.isPlaying) {
-          audioEl.play()
-        } else {
+      
+      // Apply sync offset
+      const syncOffset = clip.syncOffset || 0
+      const adjustedTimeInClip = timeInClip + syncOffset
+      
+      if (adjustedTimeInClip >= 0 && adjustedTimeInClip <= clip.duration) {
+        // Only update currentTime if it's significantly different to avoid glitches
+        const targetTime = adjustedTimeInClip / 1000
+        if (Math.abs(audioEl.currentTime - targetTime) > 0.1) {
+          audioEl.currentTime = targetTime
+        }
+        
+        // Calculate fade effects
+        let fadeMultiplier = 1
+        if (clip.fadeIn && adjustedTimeInClip < clip.fadeIn) {
+          fadeMultiplier = adjustedTimeInClip / clip.fadeIn
+        } else if (clip.fadeOut && adjustedTimeInClip > (clip.duration - clip.fadeOut)) {
+          const fadeOutStart = clip.duration - clip.fadeOut
+          fadeMultiplier = 1 - ((adjustedTimeInClip - fadeOutStart) / clip.fadeOut)
+        }
+        
+        // Calculate crossfade effects
+        let crossfadeMultiplier = 1
+        if (clip.crossfadeIn && adjustedTimeInClip < clip.crossfadeIn) {
+          // Crossfade in: gradually increase volume from 0 to full
+          crossfadeMultiplier = adjustedTimeInClip / clip.crossfadeIn
+        } else if (clip.crossfadeOut && adjustedTimeInClip > (clip.duration - clip.crossfadeOut)) {
+          // Crossfade out: gradually decrease volume from full to 0
+          const crossfadeOutStart = clip.duration - clip.crossfadeOut
+          crossfadeMultiplier = 1 - ((adjustedTimeInClip - crossfadeOutStart) / clip.crossfadeOut)
+        }
+        
+        // Get volume from keyframes
+        const keyframeVolume = getVolumeFromKeyframes(clip, adjustedTimeInClip)
+        
+        // Get track controls
+        const track = state.audioTracks.find(t => t.id === clip.trackId)
+        const trackVolume = track?.volume || 1
+        const trackMute = track?.mute || false
+        const trackSolo = track?.solo || false
+        
+        // Check if any other track is soloed
+        const anySolo = state.audioTracks.some(t => t.solo)
+        const shouldPlay = !trackMute && (!anySolo || trackSolo)
+        
+        // Apply track pan (simplified - just affects volume balance)
+        const panMultiplier = track?.pan ? (track.pan > 0 ? 1 - track.pan * 0.5 : 1 + track.pan * 0.5) : 1
+        
+        // Calculate final volume with all factors
+        const baseVolume = keyframeVolume * fadeMultiplier * crossfadeMultiplier * trackVolume * panMultiplier
+        const masterVolume = state.masterMute ? 0 : state.masterVolume
+        const targetVolume = shouldPlay ? baseVolume * masterVolume : 0
+        if (Math.abs(audioEl.volume - targetVolume) > 0.01) {
+          audioEl.volume = targetVolume
+        }
+        
+        if (state.isPlaying && audioEl.paused) {
+          audioEl.play().catch(() => {
+            // Ignore play interruption errors
+          })
+        } else if (!state.isPlaying && !audioEl.paused) {
           audioEl.pause()
         }
       } else {
-        audioEl.pause()
+        if (!audioEl.paused) {
+          audioEl.pause()
+        }
       }
     })
 
-    // Pause audio clips that are no longer playing
-    for (let i = currentAudioClips.length; i < audioRefs.current.length; i++) {
-      if (audioRefs.current[i]) {
-        audioRefs.current[i].pause()
-      }
-    }
+        // Pause audio clips that are no longer playing
+        const activeClipIds = new Set(currentAudioClips.map(clip => clip.id))
+        Object.keys(audioRefs.current).forEach(clipId => {
+          if (!activeClipIds.has(clipId) && audioRefs.current[clipId] && !audioRefs.current[clipId].paused) {
+            audioRefs.current[clipId].pause()
+          }
+        })
   }, [currentAudioClips, state.currentTime, state.isPlaying])
+
+  // Cleanup audio elements when component unmounts or clips change
+  useEffect(() => {
+    return () => {
+      Object.values(audioRefs.current).forEach(audioEl => {
+        if (audioEl) {
+          audioEl.pause()
+          audioEl.src = ''
+        }
+      })
+      audioRefs.current = {}
+    }
+  }, [])
 
   // Sync video currentTime with playhead position when play state changes
   useEffect(() => {

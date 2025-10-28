@@ -105,7 +105,7 @@ ipcMain.handle('importVideo', async (event, { filePath }) => {
 // Audio processing handlers
 ipcMain.handle('importAudio', async (event, { filePath }) => {
   try {
-    const metadata = await ffmpegService.getMetadata(filePath)
+    const metadata = await ffmpegService.getAudioMetadata(filePath)
     
     return { success: true, metadata }
   } catch (error) {

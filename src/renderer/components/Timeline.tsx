@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useCallback, useState, MouseEvent as ReactMou
 import { useProject, Clip, AudioClip, TextOverlay } from '../context/ProjectContext'
 
 const Timeline: React.FC = () => {
-  const { state, setCurrentTime, removeClip, updateClip, saveHistory, setSelectedClipId, setZoom, removeTextOverlay, removeAudioClip, updateAudioClip } = useProject()
+  const { state, setCurrentTime, removeClip, updateClip, saveHistory, setSelectedClipId, setZoom, removeTextOverlay, removeAudioClip, updateAudioClip, addToSelection, removeFromSelection, clearSelection, setSelectedClips } = useProject()
   const [selectedTextOverlay, setSelectedTextOverlay] = useState<{ clipId: string; overlayId: string } | null>(null)
   const zoom = state.zoom
   const selectedClipId = state.selectedClipId
@@ -79,11 +79,16 @@ const Timeline: React.FC = () => {
   // Handle timeline click to seek
   const handleTimelineClick = useCallback((e: ReactMouseEvent) => {
     if (!timelineContainerRef.current || isDraggingClip) return
+    
+    // Clear selection when clicking on empty timeline
+    clearSelection()
+    setSelectedClipId(null)
+    
     const rect = timelineContainerRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const newTime = Math.max(0, pxToTime(x))
     setCurrentTime(snapToGrid(newTime))
-  }, [pxToTime, setCurrentTime, isDraggingClip])
+  }, [pxToTime, setCurrentTime, isDraggingClip, clearSelection, setSelectedClipId])
 
   // Handle playhead drag start
   const handlePlayheadMouseDown = useCallback((e: ReactMouseEvent) => {
@@ -133,6 +138,37 @@ const Timeline: React.FC = () => {
 
   const handleZoomOut = () => {
     setZoom(Math.max(0.5, zoom - 0.5))
+  }
+
+  const handleZoomToFit = () => {
+    // Calculate zoom to fit all content
+    const contentWidth = timeToPx(totalDuration)
+    const containerWidth = viewportWidth
+    const fitZoom = Math.max(0.5, Math.min(5, containerWidth / contentWidth))
+    setZoom(fitZoom)
+  }
+
+  const handleZoomPreset = (preset: number) => {
+    setZoom(preset)
+  }
+
+  // Frame navigation
+  const handleFrameBackward = () => {
+    const frameTime = 1000 / 30 // Assuming 30fps
+    setCurrentTime(Math.max(0, state.currentTime - frameTime))
+  }
+
+  const handleFrameForward = () => {
+    const frameTime = 1000 / 30 // Assuming 30fps
+    setCurrentTime(Math.min(totalDuration, state.currentTime + frameTime))
+  }
+
+  const handleGoToStart = () => {
+    setCurrentTime(0)
+  }
+
+  const handleGoToEnd = () => {
+    setCurrentTime(totalDuration)
   }
 
   // Handle clip drag
@@ -296,22 +332,108 @@ const Timeline: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-2 ml-auto">
-          <button
-            onClick={() => setCurrentTime(Math.max(0, state.currentTime - 5000))}
-            className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
-          >
-            ⏪ 5s
-          </button>
-          <div className="text-xs text-gray-400 font-mono px-2">
+          {/* Frame Navigation */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleGoToStart}
+              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
+              title="Go to Start"
+            >
+              ⏮
+            </button>
+            <button
+              onClick={handleFrameBackward}
+              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
+              title="Frame Backward"
+            >
+              ⏪
+            </button>
+            <button
+              onClick={handleFrameForward}
+              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
+              title="Frame Forward"
+            >
+              ⏩
+            </button>
+            <button
+              onClick={handleGoToEnd}
+              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
+              title="Go to End"
+            >
+              ⏭
+            </button>
+          </div>
+
+          {/* Time Navigation */}
+          <div className="border-l border-gray-700 ml-2 pl-2 flex items-center gap-1">
+            <button
+              onClick={() => setCurrentTime(Math.max(0, state.currentTime - 1000))}
+              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
+              title="1s Back"
+            >
+              1s ⏪
+            </button>
+            <button
+              onClick={() => setCurrentTime(Math.min(totalDuration, state.currentTime + 1000))}
+              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
+              title="1s Forward"
+            >
+              1s ⏩
+            </button>
+            <button
+              onClick={() => setCurrentTime(Math.max(0, state.currentTime - 5000))}
+              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
+              title="5s Back"
+            >
+              5s ⏪
+            </button>
+            <button
+              onClick={() => setCurrentTime(Math.min(totalDuration, state.currentTime + 5000))}
+              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
+              title="5s Forward"
+            >
+              5s ⏩
+            </button>
+          </div>
+
+          {/* Current Time Display */}
+          <div className="text-xs text-gray-400 font-mono px-2 border-l border-gray-700 ml-2">
             {formatTime(state.currentTime)}
           </div>
-          <button
-            onClick={() => setCurrentTime(Math.min(totalDuration, state.currentTime + 5000))}
-            className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
-          >
-            5s ⏩
-          </button>
           
+          {/* Zoom Presets */}
+          <div className="border-l border-gray-700 ml-2 pl-2 flex items-center gap-1">
+            <button
+              onClick={() => handleZoomPreset(0.5)}
+              className={`px-2 py-1 rounded text-xs ${zoom === 0.5 ? 'bg-blue-600 text-white' : 'bg-gray-800 hover:bg-gray-700'}`}
+              title="50% Zoom"
+            >
+              50%
+            </button>
+            <button
+              onClick={() => handleZoomPreset(1)}
+              className={`px-2 py-1 rounded text-xs ${zoom === 1 ? 'bg-blue-600 text-white' : 'bg-gray-800 hover:bg-gray-700'}`}
+              title="100% Zoom"
+            >
+              100%
+            </button>
+            <button
+              onClick={() => handleZoomPreset(2)}
+              className={`px-2 py-1 rounded text-xs ${zoom === 2 ? 'bg-blue-600 text-white' : 'bg-gray-800 hover:bg-gray-700'}`}
+              title="200% Zoom"
+            >
+              200%
+            </button>
+            <button
+              onClick={handleZoomToFit}
+              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
+              title="Fit to Screen"
+            >
+              Fit
+            </button>
+          </div>
+
+          {/* Zoom Controls */}
           <div className="border-l border-gray-700 ml-2 pl-2 flex items-center gap-1">
             <button
               onClick={handleZoomOut}
@@ -320,7 +442,9 @@ const Timeline: React.FC = () => {
             >
               −
             </button>
-            <span className="text-xs text-gray-500 mx-1 min-w-[3rem] text-center">{zoom.toFixed(1)}x</span>
+            <span className="text-xs text-gray-300 mx-1 min-w-[3rem] text-center font-mono">
+              {zoom.toFixed(1)}x
+            </span>
             <button
               onClick={handleZoomIn}
               className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
@@ -334,34 +458,60 @@ const Timeline: React.FC = () => {
 
       {/* Tracks */}
       <div className="flex-1 overflow-auto" ref={viewportRef}>
-        {/* Ruler */}
+        {/* Enhanced Ruler */}
         <div 
           ref={rulerRef}
-          className="h-8 bg-dark-tertiary border-b border-gray-800 flex items-start sticky top-0 z-10 cursor-grab"
+          className="h-12 bg-dark-tertiary border-b border-gray-800 flex items-start sticky top-0 z-10 cursor-grab"
           onMouseDown={handlePlayheadMouseDown}
         >
-          <div className="w-20 border-r border-gray-800"></div>
+          <div className="w-20 border-r border-gray-800 flex items-center justify-center">
+            <span className="text-xs text-gray-400 font-semibold">Time</span>
+          </div>
           <div className="flex-1 relative" style={{ width: `${timeToPx(totalDuration)}px`, minWidth: '100%' }}>
             {timeMarkers.map((time) => {
-              const labelWidth = 50 // Approximate width of time label in pixels
+              const labelWidth = 60 // Approximate width of time label in pixels
               const leftPos = timeToPx(time)
               
               // Only show label if it won't collide with next marker
               const shouldShowLabel = timeMarkers.indexOf(time) === 0 || 
                 (timeToPx(timeMarkers[timeMarkers.indexOf(time) + 1] - time) > labelWidth)
               
+              // Calculate frame number (assuming 30fps)
+              const frameNumber = Math.round(time * 30 / 1000)
+              
               return (
                 <div
                   key={time}
-                  className="absolute border-l border-gray-700 h-full flex flex-col"
+                  className="absolute border-l border-gray-600 h-full flex flex-col"
                   style={{ left: `${leftPos}px` }}
                 >
+                  {/* Time Label */}
                   {shouldShowLabel && (
-                    <div className="mt-1 ml-2 text-[11px] text-gray-300 font-mono whitespace-nowrap">{formatTime(time)}</div>
+                    <div className="mt-1 ml-1 text-[10px] text-gray-300 font-mono whitespace-nowrap">
+                      {formatTime(time)}
+                    </div>
                   )}
+                  
+                  {/* Frame Number (only show for major markers) */}
+                  {shouldShowLabel && time % 1000 === 0 && (
+                    <div className="mt-3 ml-1 text-[9px] text-gray-500 font-mono">
+                      F{frameNumber}
+                    </div>
+                  )}
+                  
+                  {/* Minor tick marks */}
+                  <div className="absolute bottom-0 w-px h-2 bg-gray-600"></div>
                 </div>
               )
             })}
+            
+            {/* Playhead */}
+            <div
+              className="absolute top-0 w-0.5 h-full bg-accent z-20 pointer-events-none"
+              style={{ left: `${timeToPx(state.currentTime)}px` }}
+            >
+              <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-accent rounded-full"></div>
+            </div>
           </div>
         </div>
 
@@ -481,12 +631,15 @@ const Timeline: React.FC = () => {
               {/* Clips */}
               {track.clips.map(clip => {
                 const isSelected = selectedClipId === clip.id
+                const isMultiSelected = state.selectedClipIds.includes(clip.id)
                 return (
                   <div
                     key={clip.id}
                     className={`absolute h-28 top-2 rounded-lg border-2 flex flex-col cursor-move shadow-lg transition-all overflow-visible ${
                       isSelected
                         ? 'border-white ring-2 ring-blue-400 ring-opacity-50'
+                        : isMultiSelected
+                        ? 'border-orange-400 ring-2 ring-orange-400 ring-opacity-50'
                         : 'border-blue-500 hover:border-blue-400'
                     }`}
                     style={{
@@ -496,7 +649,20 @@ const Timeline: React.FC = () => {
                     }}
                     onClick={(e) => {
                       e.stopPropagation()
-                      setSelectedClipId(clip.id)
+                      
+                      // Multi-select logic
+                      if (e.metaKey || e.ctrlKey) {
+                        // Add/remove from selection
+                        if (state.selectedClipIds.includes(clip.id)) {
+                          removeFromSelection(clip.id)
+                        } else {
+                          addToSelection(clip.id)
+                        }
+                      } else {
+                        // Single select
+                        setSelectedClipId(clip.id)
+                        setSelectedClips([clip.id])
+                      }
                     }}
                     onMouseDown={(e) => handleClipMouseDown(e, clip)}
                   >
@@ -670,12 +836,15 @@ const Timeline: React.FC = () => {
               {/* Audio Clips */}
               {track.clips.map(clip => {
                 const isSelected = selectedClipId === clip.id
+                const isMultiSelected = state.selectedClipIds.includes(clip.id)
                 return (
                   <div
                     key={clip.id}
                     className={`absolute h-16 top-2 rounded-lg border-2 flex items-center justify-center cursor-move shadow-lg transition-all overflow-visible ${
                       isSelected
                         ? 'border-pink-400 ring-2 ring-pink-300'
+                        : isMultiSelected
+                        ? 'border-orange-400 ring-2 ring-orange-400 ring-opacity-50'
                         : 'border-pink-600 hover:border-pink-500'
                     }`}
                     style={{
@@ -685,7 +854,20 @@ const Timeline: React.FC = () => {
                     }}
                     onClick={(e) => {
                       e.stopPropagation()
-                      setSelectedClipId(clip.id)
+                      
+                      // Multi-select logic
+                      if (e.metaKey || e.ctrlKey) {
+                        // Add/remove from selection
+                        if (state.selectedClipIds.includes(clip.id)) {
+                          removeFromSelection(clip.id)
+                        } else {
+                          addToSelection(clip.id)
+                        }
+                      } else {
+                        // Single select
+                        setSelectedClipId(clip.id)
+                        setSelectedClips([clip.id])
+                      }
                     }}
                     onMouseDown={(e) => handleAudioClipMouseDown(e, clip)}
                   >
@@ -734,6 +916,60 @@ const Timeline: React.FC = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Mini Timeline Overview */}
+      <div className="h-16 bg-dark-tertiary border-t border-gray-800 flex items-center px-4">
+        <div className="flex items-center gap-2 w-full">
+          <span className="text-xs text-gray-400 font-semibold min-w-[3rem]">Overview</span>
+          
+          {/* Mini Timeline */}
+          <div className="flex-1 h-8 bg-gray-900 rounded border border-gray-700 relative overflow-hidden">
+            {/* Mini clips representation */}
+            {state.clips.map((clip) => (
+              <div
+                key={clip.id}
+                className="absolute h-full bg-blue-500 rounded-sm border border-blue-400"
+                style={{
+                  left: `${(clip.offset / totalDuration) * 100}%`,
+                  width: `${(clip.duration / totalDuration) * 100}%`,
+                }}
+              />
+            ))}
+            
+            {/* Mini audio clips */}
+            {state.audioClips.map((clip) => (
+              <div
+                key={clip.id}
+                className="absolute h-full bg-pink-500 rounded-sm border border-pink-400"
+                style={{
+                  left: `${(clip.offset / totalDuration) * 100}%`,
+                  width: `${(clip.duration / totalDuration) * 100}%`,
+                }}
+              />
+            ))}
+            
+            {/* Viewport indicator */}
+            <div
+              className="absolute top-0 h-full border-2 border-accent bg-accent/20 pointer-events-none"
+              style={{
+                left: `${Math.max(0, (state.currentTime - viewportWidth / 2 / zoom) / totalDuration) * 100}%`,
+                width: `${(viewportWidth / zoom / totalDuration) * 100}%`,
+              }}
+            />
+            
+            {/* Current time indicator */}
+            <div
+              className="absolute top-0 w-0.5 h-full bg-accent pointer-events-none"
+              style={{ left: `${(state.currentTime / totalDuration) * 100}%` }}
+            />
+          </div>
+          
+          {/* Duration info */}
+          <div className="text-xs text-gray-400 font-mono min-w-[4rem] text-right">
+            {formatTime(totalDuration)}
+          </div>
+        </div>
       </div>
 
       {/* Footer Tips */}
