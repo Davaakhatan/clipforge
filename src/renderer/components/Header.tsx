@@ -1,17 +1,34 @@
 import React, { useState } from 'react'
 import { useProject } from '../context/ProjectContext'
 
+interface ExportSettings {
+  quality: 'high' | 'medium' | 'low'
+  resolution: '720p' | '1080p' | '4K'
+  format: 'mp4' | 'mov'
+}
+
 const Header: React.FC = () => {
   const { state, undo, redo, canUndo, canRedo } = useProject()
   const [exporting, setExporting] = useState(false)
   const [exportProgress, setExportProgress] = useState(0)
+  const [showExportDialog, setShowExportDialog] = useState(false)
+  const [exportSettings, setExportSettings] = useState<ExportSettings>({
+    quality: 'high',
+    resolution: '1080p',
+    format: 'mp4',
+  })
 
-  const handleExport = async () => {
+  const handleExportClick = () => {
     if (state.clips.length === 0) {
       alert('No clips to export!')
       return
     }
+    setShowExportDialog(true)
+  }
 
+  const handleExport = async () => {
+    setShowExportDialog(false)
+    
     try {
       setExporting(true)
       setExportProgress(0)
@@ -36,11 +53,25 @@ const Header: React.FC = () => {
           duration: clip.duration,
           startTime: clip.startTime,
           endTime: clip.endTime,
+          speed: clip.speed,
+          volume: clip.volume,
+          brightness: clip.brightness || 0,
+          contrast: clip.contrast || 0,
+          saturation: clip.saturation || 0,
+          fadeIn: clip.fadeIn || 0,
+          fadeOut: clip.fadeOut || 0,
+          transitionIn: clip.transitionIn,
+          transitionOut: clip.transitionOut,
+          transitionDuration: clip.transitionDuration || 500,
         }))
       )
 
-      // Export
-      const result = await window.electron?.ipc?.invoke('exportVideo', { clips, outputPath })
+      // Export with settings
+      const result = await window.electron?.ipc?.invoke('exportVideo', { 
+        clips, 
+        outputPath, 
+        settings: exportSettings 
+      })
       
       if (cleanup) cleanup()
       
@@ -70,6 +101,76 @@ const Header: React.FC = () => {
 
   return (
     <>
+      {/* Export Settings Dialog */}
+      {showExportDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center">
+          <div className="bg-dark border border-gray-700 rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-white mb-2">Export Settings</h3>
+              <p className="text-gray-400 text-sm">Choose your export options</p>
+            </div>
+
+            <div className="space-y-4">
+              {/* Quality */}
+              <div>
+                <label className="text-sm font-semibold text-gray-300 mb-2 block">Quality</label>
+                <select
+                  value={exportSettings.quality}
+                  onChange={(e) => setExportSettings({ ...exportSettings, quality: e.target.value as any })}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
+                >
+                  <option value="high">High (Best Quality)</option>
+                  <option value="medium">Medium (Balanced)</option>
+                  <option value="low">Low (Smaller File)</option>
+                </select>
+              </div>
+
+              {/* Resolution */}
+              <div>
+                <label className="text-sm font-semibold text-gray-300 mb-2 block">Resolution</label>
+                <select
+                  value={exportSettings.resolution}
+                  onChange={(e) => setExportSettings({ ...exportSettings, resolution: e.target.value as any })}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
+                >
+                  <option value="720p">720p HD</option>
+                  <option value="1080p">1080p Full HD</option>
+                  <option value="4K">4K Ultra HD</option>
+                </select>
+              </div>
+
+              {/* Format */}
+              <div>
+                <label className="text-sm font-semibold text-gray-300 mb-2 block">Format</label>
+                <select
+                  value={exportSettings.format}
+                  onChange={(e) => setExportSettings({ ...exportSettings, format: e.target.value as any })}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
+                >
+                  <option value="mp4">MP4 (Recommended)</option>
+                  <option value="mov">MOV (Apple)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowExportDialog(false)}
+                className="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-white font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExport}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg text-white font-semibold transition-all shadow-lg"
+              >
+                Export
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Export Progress Modal */}
       {exporting && (
         <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center">
@@ -141,7 +242,7 @@ const Header: React.FC = () => {
             </button>
             <div className="w-px h-6 bg-gray-700" />
             <button
-              onClick={handleExport}
+              onClick={handleExportClick}
               disabled={exporting || state.clips.length === 0}
               className="px-4 py-1.5 bg-accent hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm font-medium transition-colors"
             >
