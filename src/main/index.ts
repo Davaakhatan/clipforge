@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron'
 import * as path from 'path'
 import { ffmpegService } from './services/FFmpegService'
 import { recordingService } from './services/RecordingService'
+import { aiService } from './services/AIService'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -220,4 +221,53 @@ ipcMain.handle('restoreWindow', async () => {
   if (mainWindow) {
     mainWindow.restore()
   }
+})
+
+// AI Service IPC handlers
+ipcMain.handle('checkAIConfiguration', async () => {
+  console.log('checkAIConfiguration handler called')
+  const isConfigured = aiService.isConfigured()
+  console.log('AI configured:', isConfigured)
+  return { isConfigured }
+})
+
+ipcMain.handle('setAIApiKey', async (event, apiKey: string) => {
+  console.log('setAIApiKey handler called, key length:', apiKey.length)
+  try {
+    aiService.setApiKey(apiKey)
+    console.log('API key set successfully')
+    return { success: true }
+  } catch (error: any) {
+    console.error('Failed to set API key:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+ipcMain.handle('testAIConnection', async () => {
+  console.log('testAIConnection handler called')
+  return await aiService.testConnection()
+})
+
+ipcMain.handle('generateCaptions', async (event, audioFilePath: string) => {
+  return await aiService.generateCaptions(audioFilePath)
+})
+
+ipcMain.handle('analyzeVideoContent', async (event, videoFilePath: string) => {
+  return await aiService.analyzeVideoContent(videoFilePath)
+})
+
+ipcMain.handle('generateTextOverlays', async (event, description: string, duration: number) => {
+  return await aiService.generateTextOverlays(description, duration)
+})
+
+ipcMain.handle('suggestColorCorrection', async (event, videoFilePath: string) => {
+  return await aiService.suggestColorCorrection(videoFilePath)
+})
+
+ipcMain.handle('suggestExportSettings', async (event, videoInfo: any) => {
+  return await aiService.suggestExportSettings(videoInfo)
+})
+
+ipcMain.handle('generateMusicSuggestions', async (event, description: string, duration: number) => {
+  return await aiService.generateMusicSuggestions(description, duration)
 })

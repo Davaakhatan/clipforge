@@ -34,14 +34,14 @@ const Header: React.FC = () => {
       setExportProgress(0)
 
       // Get output path
-      const outputPath = await window.electron?.ipc?.invoke('showSaveDialog')
+      const outputPath = await window.electronAPI?.ipc?.invoke('showSaveDialog')
       if (!outputPath) {
         setExporting(false)
         return
       }
 
       // Listen for progress updates
-      const cleanup = window.electron?.ipc?.on('exportProgress', (progress: number) => {
+      const cleanup = window.electronAPI?.ipc?.on('exportProgress', (progress: number) => {
         setExportProgress(progress)
       })
 
@@ -67,7 +67,7 @@ const Header: React.FC = () => {
       )
 
       // Export with settings
-      const result = await window.electron?.ipc?.invoke('exportVideo', { 
+      const result = await window.electronAPI?.ipc?.invoke('exportVideo', { 
         clips, 
         outputPath, 
         settings: exportSettings 
@@ -88,15 +88,15 @@ const Header: React.FC = () => {
     }
   }
   const handleMinimize = () => {
-    window.electron?.ipc?.invoke('minimizeWindow')
+    window.electronAPI?.ipc?.invoke('minimizeWindow')
   }
 
   const handleMaximize = () => {
-    window.electron?.ipc?.invoke('maximizeWindow')
+    window.electronAPI?.ipc?.invoke('maximizeWindow')
   }
 
   const handleClose = () => {
-    window.electron?.ipc?.invoke('closeWindow')
+    window.electronAPI?.ipc?.invoke('closeWindow')
   }
 
   return (

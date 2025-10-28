@@ -55,7 +55,7 @@ const RecordingPanel: React.FC = () => {
 
       if (type === 'screen') {
         // Get screen sources from main process
-        const sources = await window.electron.ipc.invoke('getScreenSources')
+        const sources = await window.electronAPI.ipc.invoke('getScreenSources')
         
         if (!sources || sources.length === 0) {
           const grantPermission = confirm(
@@ -69,7 +69,7 @@ const RecordingPanel: React.FC = () => {
           )
           
           if (grantPermission) {
-            await window.electron.ipc.invoke('openScreenRecordingSettings')
+            await window.electronAPI.ipc.invoke('openScreenRecordingSettings')
           }
           return
         }
@@ -93,7 +93,7 @@ const RecordingPanel: React.FC = () => {
         stream = await navigator.mediaDevices.getUserMedia(constraints)
       } else if (type === 'pip') {
         console.log('[RecordingPanel] Starting PiP recording')
-        const sources = await window.electron.ipc.invoke('getScreenSources')
+        const sources = await window.electronAPI.ipc.invoke('getScreenSources')
         
         if (!sources || !Array.isArray(sources) || sources.length === 0) {
           alert('No screen sources available.')
@@ -308,7 +308,7 @@ const RecordingPanel: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 500))
       
       // Minimize window AFTER recording has started
-      await window.electron?.ipc?.invoke('minimizeWindow')
+      await window.electronAPI?.ipc?.invoke('minimizeWindow')
       
       // Log chunk updates periodically and monitor stream health
       const progressCheck = setInterval(() => {
@@ -439,7 +439,7 @@ const RecordingPanel: React.FC = () => {
       const buffer = Array.from(new Uint8Array(arrayBuffer)) // Convert to regular array for IPC
       
       // Save via IPC
-      const filePath = await window.electron.ipc.invoke('saveRecording', {
+      const filePath = await window.electronAPI.ipc.invoke('saveRecording', {
         fileName,
         buffer
       })
@@ -501,7 +501,7 @@ const RecordingPanel: React.FC = () => {
       mediaRecorderRef.current = null
       
       // Restore window when recording stops
-      await window.electron.ipc.invoke('restoreWindow')
+      await window.electronAPI.ipc.invoke('restoreWindow')
     }
     }
     

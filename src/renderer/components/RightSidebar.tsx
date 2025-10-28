@@ -1,16 +1,22 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useProject, TextOverlay } from '../context/ProjectContext'
 import { v4 as uuidv4 } from 'uuid'
 import VolumeAutomation from './VolumeAutomation'
 import AudioMixer from './AudioMixer'
 import AudioSync from './AudioSync'
 import BatchOperations from './BatchOperations'
+import { AISettings } from './AISettings'
+import { AIFeatures } from './AIFeatures'
 
 const RightSidebar: React.FC = () => {
   const { state, setPlaying, setCurrentTime, updateClip, addTextOverlay, updateTextOverlay, saveHistory, updateAudioClip, splitClip, splitAudioClip, duplicateAudioClip, normalizeAudioClip, setCrossfadeAudioClip, setAudioEffects, addVolumeKeyframe, removeVolumeKeyframe, updateVolumeKeyframe, setAudioSyncOffset, updateAudioTrack, setMasterVolume, setMasterMute, setSelectedClips, addToSelection, removeFromSelection, clearSelection, batchUpdateClips, batchUpdateAudioClips } = useProject()
 
   const selectedClip = state.clips.find(c => c.id === state.selectedClipId)
   const selectedAudioClip = state.audioClips.find(c => c.id === state.selectedClipId)
+
+  // AI state
+  const [showAISettings, setShowAISettings] = useState(false)
+  const [showAIFeatures, setShowAIFeatures] = useState(false)
 
   const handlePlayPause = () => {
     setPlaying(!state.isPlaying)
@@ -1258,6 +1264,30 @@ const RightSidebar: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* AI Features Section */}
+      <div className="p-4 border-t border-gray-800">
+        <h3 className="text-sm font-semibold text-white mb-3">AI Features</h3>
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => setShowAIFeatures(true)}
+            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-1.5 px-2 rounded-md transition-colors text-xs flex items-center justify-center gap-1"
+          >
+            <span>AI Tools</span>
+          </button>
+          <button
+            onClick={() => setShowAISettings(true)}
+            className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white py-1.5 px-2 rounded-md transition-colors text-xs flex items-center justify-center gap-1"
+          >
+            <span>Settings</span>
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 mt-2">Auto captions, smart editing, AI suggestions</p>
+      </div>
+
+      {/* AI Modals */}
+      <AISettings isOpen={showAISettings} onClose={() => setShowAISettings(false)} />
+      <AIFeatures isOpen={showAIFeatures} onClose={() => setShowAIFeatures(false)} />
     </div>
   )
 }

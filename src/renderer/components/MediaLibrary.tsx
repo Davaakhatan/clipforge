@@ -16,7 +16,7 @@ const MediaLibrary: React.FC = () => {
     try {
       setImporting(prev => [...prev, filePath])
       
-      const result = await window.electron.ipc.invoke('importVideo', { filePath })
+      const result = await window.electronAPI.ipc.invoke('importVideo', { filePath })
       
       if (result.success) {
         const clip: Clip = {
@@ -51,7 +51,7 @@ const MediaLibrary: React.FC = () => {
     try {
       setImporting(prev => [...prev, filePath])
       
-      const result = await window.electron.ipc.invoke('importAudio', { filePath })
+      const result = await window.electronAPI.ipc.invoke('importAudio', { filePath })
       
       if (result.success) {
         const audioClip: AudioClip = {
@@ -80,7 +80,7 @@ const MediaLibrary: React.FC = () => {
   const handleFileSelect = useCallback(async () => {
     try {
       // Open native file picker dialog
-      const filePaths = await window.electron?.ipc?.invoke('showOpenDialog')
+      const filePaths = await window.electronAPI?.ipc?.invoke('showOpenDialog')
       
       if (filePaths && filePaths.length > 0) {
         for (const filePath of filePaths) {
@@ -95,7 +95,7 @@ const MediaLibrary: React.FC = () => {
 
   const handleAudioFileSelect = useCallback(async () => {
     try {
-      const filePaths = await window.electron?.ipc?.invoke('showOpenDialogAudio')
+      const filePaths = await window.electronAPI?.ipc?.invoke('showOpenDialogAudio')
       
       if (filePaths && filePaths.length > 0) {
         for (const filePath of filePaths) {
