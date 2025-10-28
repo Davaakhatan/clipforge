@@ -298,63 +298,74 @@ const RightSidebar: React.FC = () => {
             </div>
 
             {/* Transitions */}
-            <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Transitions</label>
+            <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-xl p-4 border border-purple-500/20 backdrop-blur-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                </div>
+                <label className="text-xs font-bold text-white uppercase tracking-wider">Transitions</label>
               </div>
               
               {/* Transition In */}
-              <div className="mb-3">
-                <label className="text-xs text-gray-500 mb-1 block">Transition In</label>
+              <div className="mb-4">
+                <label className="text-xs font-semibold text-gray-400 mb-2 block flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+                  Transition In
+                </label>
                 <select
                   value={selectedClip.transitionIn || 'none'}
                   onChange={(e) => {
                     updateClip(selectedClip.id, { transitionIn: e.target.value as any })
                     saveHistory()
                   }}
-                  className="w-full px-2 py-1 bg-gray-900 border border-gray-600 rounded text-white text-xs"
+                  className="w-full px-3 py-2 bg-gray-900/80 border border-gray-700 rounded-lg text-white text-xs hover:border-purple-500/50 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                 >
                   <option value="none">None</option>
-                  <option value="fade">Fade In</option>
-                  <option value="slide-left">Slide From Left</option>
-                  <option value="slide-right">Slide From Right</option>
-                  <option value="slide-up">Slide From Bottom</option>
-                  <option value="slide-down">Slide From Top</option>
-                  <option value="zoom-in">Zoom In</option>
-                  <option value="zoom-out">Zoom Out</option>
-                  <option value="blur">Blur</option>
+                  <option value="fade">✨ Fade In</option>
+                  <option value="slide-left">⬅️ Slide From Left</option>
+                  <option value="slide-right">➡️ Slide From Right</option>
+                  <option value="slide-up">⬆️ Slide From Top</option>
+                  <option value="slide-down">⬇️ Slide From Bottom</option>
+                  <option value="zoom-in">🔍 Zoom In</option>
+                  <option value="zoom-out">🔎 Zoom Out</option>
+                  <option value="blur">🌫️ Blur</option>
                 </select>
               </div>
               
               {/* Transition Out */}
-              <div className="mb-3">
-                <label className="text-xs text-gray-500 mb-1 block">Transition Out</label>
+              <div className="mb-4">
+                <label className="text-xs font-semibold text-gray-400 mb-2 block flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                  Transition Out
+                </label>
                 <select
                   value={selectedClip.transitionOut || 'none'}
                   onChange={(e) => {
                     updateClip(selectedClip.id, { transitionOut: e.target.value as any })
                     saveHistory()
                   }}
-                  className="w-full px-2 py-1 bg-gray-900 border border-gray-600 rounded text-white text-xs"
+                  className="w-full px-3 py-2 bg-gray-900/80 border border-gray-700 rounded-lg text-white text-xs hover:border-purple-500/50 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                 >
                   <option value="none">None</option>
-                  <option value="fade">Fade Out</option>
-                  <option value="slide-left">Slide To Left</option>
-                  <option value="slide-right">Slide To Right</option>
-                  <option value="slide-up">Slide To Top</option>
-                  <option value="slide-down">Slide To Bottom</option>
-                  <option value="zoom-in">Zoom In</option>
-                  <option value="zoom-out">Zoom Out</option>
-                  <option value="blur">Blur</option>
+                  <option value="fade">✨ Fade Out</option>
+                  <option value="slide-left">⬅️ Slide To Left</option>
+                  <option value="slide-right">➡️ Slide To Right</option>
+                  <option value="slide-up">⬆️ Slide To Top</option>
+                  <option value="slide-down">⬇️ Slide To Bottom</option>
+                  <option value="zoom-in">🔍 Zoom In</option>
+                  <option value="zoom-out">🔎 Zoom Out</option>
+                  <option value="blur">🌫️ Blur</option>
                 </select>
               </div>
               
               {/* Transition Duration */}
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Duration (ms)</label>
+                <label className="text-xs font-semibold text-gray-400 mb-2 block flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                  Duration (ms)
+                </label>
                 <input
                   type="number"
                   min="100"
@@ -365,8 +376,26 @@ const RightSidebar: React.FC = () => {
                     updateClip(selectedClip.id, { transitionDuration: parseInt(e.target.value) || 500 })
                     saveHistory()
                   }}
-                  className="w-full px-2 py-1 bg-gray-900 border border-gray-600 rounded text-white text-xs"
+                  className="w-full px-3 py-2 bg-gray-900/80 border border-gray-700 rounded-lg text-white text-xs hover:border-purple-500/50 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                 />
+                <div className="flex items-center gap-2 mt-2">
+                  {[100, 300, 500, 1000].map(val => (
+                    <button
+                      key={val}
+                      onClick={() => {
+                        updateClip(selectedClip.id, { transitionDuration: val })
+                        saveHistory()
+                      }}
+                      className={`text-xs px-2 py-1 rounded transition-colors ${
+                        selectedClip.transitionDuration === val
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      }`}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 

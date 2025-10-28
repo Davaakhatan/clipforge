@@ -103,68 +103,117 @@ const Header: React.FC = () => {
     <>
       {/* Export Settings Dialog */}
       {showExportDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center">
-          <div className="bg-dark border border-gray-700 rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-white mb-2">Export Settings</h3>
-              <p className="text-gray-400 text-sm">Choose your export options</p>
+        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center" onClick={() => setShowExportDialog(false)}>
+          <div className="bg-gradient-to-br from-dark to-gray-900 border border-gray-700 rounded-3xl shadow-2xl p-8 max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </div>
+              <h3 className="text-3xl font-bold text-white mb-2">Export Settings</h3>
+              <p className="text-gray-400">Customize your video export</p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               {/* Quality */}
               <div>
-                <label className="text-sm font-semibold text-gray-300 mb-2 block">Quality</label>
+                <label className="text-sm font-bold text-gray-300 mb-3 block flex items-center gap-2">
+                  <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                    <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                  </svg>
+                  Quality
+                </label>
                 <select
                   value={exportSettings.quality}
                   onChange={(e) => setExportSettings({ ...exportSettings, quality: e.target.value as any })}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
+                  className="w-full px-4 py-3 bg-gray-800/80 border border-gray-700 rounded-xl text-white font-medium hover:border-blue-500/50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 >
-                  <option value="high">High (Best Quality)</option>
-                  <option value="medium">Medium (Balanced)</option>
-                  <option value="low">Low (Smaller File)</option>
+                  <option value="high">🏆 High (Best Quality)</option>
+                  <option value="medium">⚖️ Medium (Balanced)</option>
+                  <option value="low">💾 Low (Smaller File)</option>
                 </select>
               </div>
 
               {/* Resolution */}
               <div>
-                <label className="text-sm font-semibold text-gray-300 mb-2 block">Resolution</label>
-                <select
-                  value={exportSettings.resolution}
-                  onChange={(e) => setExportSettings({ ...exportSettings, resolution: e.target.value as any })}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
-                >
-                  <option value="720p">720p HD</option>
-                  <option value="1080p">1080p Full HD</option>
-                  <option value="4K">4K Ultra HD</option>
-                </select>
+                <label className="text-sm font-bold text-gray-300 mb-3 block flex items-center gap-2">
+                  <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" />
+                    <path fillRule="evenodd" d="M1 7h18v10a2 2 0 01-2 2H3a2 2 0 01-2-2V7zm2 6h14V9H3v4z" clipRule="evenodd" />
+                  </svg>
+                  Resolution
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { value: '720p', label: '720p HD', desc: 'HD' },
+                    { value: '1080p', label: '1080p', desc: 'Full HD' },
+                    { value: '4K', label: '4K', desc: 'Ultra HD' },
+                  ].map(res => (
+                    <button
+                      key={res.value}
+                      onClick={() => setExportSettings({ ...exportSettings, resolution: res.value as any })}
+                      className={`px-4 py-3 rounded-xl border-2 transition-all ${
+                        exportSettings.resolution === res.value
+                          ? 'border-blue-500 bg-blue-500/10 text-white'
+                          : 'border-gray-700 bg-gray-800/80 text-gray-400 hover:border-gray-600'
+                      }`}
+                    >
+                      <div className="font-bold">{res.label}</div>
+                      <div className="text-xs opacity-75">{res.desc}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Format */}
               <div>
-                <label className="text-sm font-semibold text-gray-300 mb-2 block">Format</label>
-                <select
-                  value={exportSettings.format}
-                  onChange={(e) => setExportSettings({ ...exportSettings, format: e.target.value as any })}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
-                >
-                  <option value="mp4">MP4 (Recommended)</option>
-                  <option value="mov">MOV (Apple)</option>
-                </select>
+                <label className="text-sm font-bold text-gray-300 mb-3 block flex items-center gap-2">
+                  <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2h-1.528A6 6 0 004 9.528V4z" />
+                    <path fillRule="evenodd" d="M6 10a2 2 0 00-2 2v3a2 2 0 002 2h3a2 2 0 002-2v-3a2 2 0 00-2-2H6zm4 2v3h3v-3h-3z" clipRule="evenodd" />
+                  </svg>
+                  Format
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { value: 'mp4', label: 'MP4', desc: 'Recommended', icon: '📁' },
+                    { value: 'mov', label: 'MOV', desc: 'Apple', icon: '🍎' },
+                  ].map(fmt => (
+                    <button
+                      key={fmt.value}
+                      onClick={() => setExportSettings({ ...exportSettings, format: fmt.value as any })}
+                      className={`px-4 py-3 rounded-xl border-2 transition-all ${
+                        exportSettings.format === fmt.value
+                          ? 'border-purple-500 bg-purple-500/10 text-white'
+                          : 'border-gray-700 bg-gray-800/80 text-gray-400 hover:border-gray-600'
+                      }`}
+                    >
+                      <div className="font-bold text-lg mb-1">{fmt.icon}</div>
+                      <div className="font-semibold">{fmt.label}</div>
+                      <div className="text-xs opacity-75">{fmt.desc}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-3 mt-8 pt-6 border-t border-gray-700">
               <button
                 onClick={() => setShowExportDialog(false)}
-                className="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-white font-medium transition-colors"
+                className="flex-1 px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-xl text-white font-semibold transition-all hover:shadow-lg"
               >
                 Cancel
               </button>
               <button
                 onClick={handleExport}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg text-white font-semibold transition-all shadow-lg"
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
               >
-                Export
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export Video
               </button>
             </div>
           </div>
