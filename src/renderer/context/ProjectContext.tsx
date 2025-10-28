@@ -46,9 +46,30 @@ export interface TimelineTrack {
   clips: Clip[]
 }
 
+export interface AudioClip {
+  id: string
+  name: string
+  filePath: string
+  duration: number
+  startTime: number
+  endTime: number
+  trackId: number
+  offset: number
+  volume: number // 0 to 1 (0% to 100%)
+  fadeIn?: number // Duration of fade in transition in ms
+  fadeOut?: number // Duration of fade out transition in ms
+}
+
+export interface AudioTrack {
+  id: number
+  clips: AudioClip[]
+}
+
 interface ProjectState {
   tracks: TimelineTrack[]
+  audioTracks: AudioTrack[]
   clips: Clip[]
+  audioClips: AudioClip[]
   currentTime: number
   isPlaying: boolean
   zoom: number
@@ -60,6 +81,9 @@ type ProjectAction =
   | { type: 'ADD_CLIP'; clip: Clip }
   | { type: 'REMOVE_CLIP'; clipId: string }
   | { type: 'UPDATE_CLIP'; clipId: string; updates: Partial<Clip> }
+  | { type: 'ADD_AUDIO_CLIP'; clip: AudioClip }
+  | { type: 'REMOVE_AUDIO_CLIP'; clipId: string }
+  | { type: 'UPDATE_AUDIO_CLIP'; clipId: string; updates: Partial<AudioClip> }
   | { type: 'ADD_TEXT_OVERLAY'; clipId: string; overlay: TextOverlay }
   | { type: 'REMOVE_TEXT_OVERLAY'; clipId: string; overlayId: string }
   | { type: 'UPDATE_TEXT_OVERLAY'; clipId: string; overlayId: string; updates: Partial<TextOverlay> }
@@ -76,7 +100,11 @@ const initialState: ProjectState = {
     { id: 0, clips: [] },
     { id: 1, clips: [] },
   ],
+  audioTracks: [
+    { id: 0, clips: [] },
+  ],
   clips: [],
+  audioClips: [],
   currentTime: 0,
   isPlaying: false,
   zoom: 1,
@@ -112,6 +140,37 @@ function projectReducer(state: ProjectState, action: ProjectAction): ProjectStat
         ...state,
         clips: state.clips.map(c => c.id === action.clipId ? { ...c, ...action.updates } : c),
         tracks: state.tracks.map(track => ({
+          ...track,
+          clips: track.clips.map(c => c.id === action.clipId ? { ...c, ...action.updates } : c),
+        })),
+      }
+
+    case 'ADD_AUDIO_CLIP':
+      return {
+        ...state,
+        audioClips: [...state.audioClips, action.clip],
+        audioTracks: state.audioTracks.map(track =>
+          track.id === action.clip.trackId
+            ? { ...track, clips: [...track.clips, action.clip] }
+            : track
+        ),
+      }
+
+    case 'REMOVE_AUDIO_CLIP':
+      return {
+        ...state,
+        audioClips: state.audioClips.filter(c => c.id !== action.clipId),
+        audioTracks: state.audioTracks.map(track => ({
+          ...track,
+          clips: track.clips.filter(c => c.id !== action.clipId),
+        })),
+      }
+
+    case 'UPDATE_AUDIO_CLIP':
+      return {
+        ...state,
+        audioClips: state.audioClips.map(c => c.id === action.clipId ? { ...c, ...action.updates } : c),
+        audioTracks: state.audioTracks.map(track => ({
           ...track,
           clips: track.clips.map(c => c.id === action.clipId ? { ...c, ...action.updates } : c),
         })),
@@ -258,6 +317,9 @@ interface ProjectContextType {
   addClip: (clip: Clip) => void
   removeClip: (clipId: string) => void
   updateClip: (clipId: string, updates: Partial<Clip>) => void
+  addAudioClip: (clip: AudioClip) => void
+  removeAudioClip: (clipId: string) => void
+  updateAudioClip: (clipId: string, updates: Partial<AudioClip>) => void
   addTextOverlay: (clipId: string, overlay: TextOverlay) => void
   removeTextOverlay: (clipId: string, overlayId: string) => void
   updateTextOverlay: (clipId: string, overlayId: string, updates: Partial<TextOverlay>) => void
@@ -322,6 +384,18 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'UPDATE_CLIP', clipId, updates })
   }, [])
 
+  const addAudioClip = useCallback((clip: AudioClip) => {
+    dispatch({ type: 'ADD_AUDIO_CLIP', clip })
+  }, [])
+
+  const removeAudioClip = useCallback((clipId: string) => {
+    dispatch({ type: 'REMOVE_AUDIO_CLIP', clipId })
+  }, [])
+
+  const updateAudioClip = useCallback((clipId: string, updates: Partial<AudioClip>) => {
+    dispatch({ type: 'UPDATE_AUDIO_CLIP', clipId, updates })
+  }, [])
+
   const setCurrentTime = useCallback((time: number) => {
     dispatch({ type: 'SET_CURRENT_TIME', time })
   }, [])
@@ -375,6 +449,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         addClip,
         removeClip,
         updateClip,
+        addAudioClip,
+        removeAudioClip,
+        updateAudioClip,
         addTextOverlay: useCallback((clipId: string, overlay: TextOverlay) => {
           dispatch({ type: 'ADD_TEXT_OVERLAY', clipId, overlay })
         }, []),
