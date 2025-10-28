@@ -30,6 +30,12 @@ const MediaLibrary: React.FC = () => {
           offset: 0,
           thumbnail: result.thumbnailPath,
           speed: 1, // Normal speed by default
+          volume: 1, // 100% volume by default
+          fadeIn: 0, // No fade in by default
+          fadeOut: 0, // No fade out by default
+          brightness: 0, // No brightness adjustment by default
+          contrast: 0, // No contrast adjustment by default
+          saturation: 0, // No saturation adjustment by default
         }
         addClip(clip)
       }
@@ -101,7 +107,12 @@ const MediaLibrary: React.FC = () => {
       {state.clips.map(clip => (
         <div
           key={clip.id}
-          className="group p-3 bg-dark-secondary rounded-lg border border-gray-800 hover:border-accent hover:shadow-lg transition-all relative overflow-hidden"
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.setData('text/plain', clip.id)
+            e.dataTransfer.effectAllowed = 'move'
+          }}
+          className="group p-3 bg-dark-secondary rounded-lg border border-gray-800 hover:border-accent hover:shadow-lg transition-all relative overflow-hidden cursor-grab active:cursor-grabbing"
         >
           {importing.includes(clip.filePath) && (
             <div className="absolute inset-0 bg-dark bg-opacity-90 flex items-center justify-center z-10 rounded-lg">

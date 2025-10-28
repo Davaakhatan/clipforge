@@ -476,6 +476,12 @@ const RecordingPanel: React.FC = () => {
         trackId: 0,
         offset: 0,
         speed: 1, // Normal speed by default
+        volume: 1, // 100% volume by default
+        fadeIn: 0, // No fade in by default
+        fadeOut: 0, // No fade out by default
+        brightness: 0, // No brightness adjustment by default
+        contrast: 0, // No contrast adjustment by default
+        saturation: 0, // No saturation adjustment by default
       }
       
       // Add to timeline

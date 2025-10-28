@@ -52,9 +52,12 @@ export function useKeyboardShortcuts() {
         return
       }
 
-      // Delete: Remove selected clip (future feature)
-      if (e.code === 'Delete' || e.code === 'Backspace') {
-        // TODO: Implement clip selection
+      // Delete: Remove selected clip (but not when editing text or in input fields)
+      if ((e.code === 'Delete' || e.code === 'Backspace') && !state.isTextEditing && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
+        if (state.selectedClipId) {
+          e.preventDefault()
+          removeClip(state.selectedClipId)
+        }
         return
       }
 
@@ -84,6 +87,6 @@ export function useKeyboardShortcuts() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [state.isPlaying, state.currentTime, state.tracks, setPlaying, setCurrentTime, splitClip, undo, redo, canUndo, canRedo])
+  }, [state.isPlaying, state.currentTime, state.tracks, state.selectedClipId, state.isTextEditing, setPlaying, setCurrentTime, splitClip, removeClip, undo, redo, canUndo, canRedo])
 }
 

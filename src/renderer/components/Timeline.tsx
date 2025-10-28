@@ -2,9 +2,9 @@ import React, { useRef, useEffect, useCallback, useState, MouseEvent as ReactMou
 import { useProject, Clip } from '../context/ProjectContext'
 
 const Timeline: React.FC = () => {
-  const { state, setCurrentTime, removeClip, updateClip, saveHistory } = useProject()
-  const [zoom, setZoom] = useState(1)
-  const [selectedClipId, setSelectedClipId] = useState<string | null>(null)
+  const { state, setCurrentTime, removeClip, updateClip, saveHistory, setSelectedClipId, setZoom } = useProject()
+  const zoom = state.zoom
+  const selectedClipId = state.selectedClipId
   const [isDraggingClip, setIsDraggingClip] = useState(false)
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false)
   const [isResizingClip, setIsResizingClip] = useState<'left' | 'right' | null>(null)
@@ -34,6 +34,22 @@ const Timeline: React.FC = () => {
     window.addEventListener('resize', updateViewport)
     return () => window.removeEventListener('resize', updateViewport)
   }, [])
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Delete key to remove selected clip
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedClipId) {
+        e.preventDefault()
+        removeClip(selectedClipId)
+        setSelectedClipId(null)
+        saveHistory() // Save state for undo/redo
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedClipId, removeClip, saveHistory])
 
   // Adaptive zoom: zoom 1.0 = fit to viewport, higher = more detail
   const pixelsPerSecond = (viewportWidth * zoom) / totalDuration
@@ -237,9 +253,12 @@ const Timeline: React.FC = () => {
         <div className="flex items-center gap-3">
           <h2 className="text-sm font-semibold">Timeline</h2>
           <span className="text-xs text-gray-500">{state.clips.length} clips</span>
+          {selectedClipId && (
+            <span className="text-xs text-blue-400">● Selected</span>
+          )}
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-auto">
           <button
             onClick={() => setCurrentTime(Math.max(0, state.currentTime - 5000))}
             className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
@@ -338,7 +357,7 @@ const Timeline: React.FC = () => {
                 return (
                   <div
                     key={clip.id}
-                    className={`absolute h-28 top-2 rounded-lg border-2 flex flex-col cursor-move shadow-lg transition-all overflow-hidden ${
+                    className={`absolute h-28 top-2 rounded-lg border-2 flex flex-col cursor-move shadow-lg transition-all overflow-visible ${
                       isSelected
                         ? 'border-white ring-2 ring-blue-400 ring-opacity-50'
                         : 'border-blue-500 hover:border-blue-400'
@@ -388,32 +407,18 @@ const Timeline: React.FC = () => {
                           {clip.speed}x
                         </p>
                       </div>
+                      
+                      {/* Volume indicator - only show if not 100% */}
+                      {clip.volume !== 1 && (
+                        <div className="absolute bottom-1 left-[calc(0.25rem+2.5rem)]">
+                          <p className="text-[10px] text-white bg-orange-600 bg-opacity-80 px-1 rounded font-bold">
+                            🔊{Math.round(clip.volume * 100)}%
+                          </p>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Speed Control Button */}
-                    {isSelected && (
-                      <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-dark border border-gray-700 rounded shadow-lg p-1 flex gap-1 z-20">
-                        {[0.25, 0.5, 1, 1.5, 2].map(speed => (
-                          <button
-                            key={speed}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              updateClip(clip.id, { speed })
-                              saveHistory()
-                            }}
-                            className={`px-2 py-1 text-xs rounded transition-colors ${
-                              clip.speed === speed
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-                            }`}
-                          >
-                            {speed}x
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Delete Button */}
+                    {/* Delete Button - Show on selected clips */}
                     {isSelected && (
                       <button
                         onClick={(e) => {

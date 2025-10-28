@@ -3,6 +3,18 @@ import React, { createContext, useContext, useReducer, useCallback, useState, us
 // Helper to generate unique ID
 const generateId = () => Math.random().toString(36).substring(7)
 
+export interface TextOverlay {
+  id: string
+  text: string
+  startTime: number
+  endTime: number
+  position: { x: number; y: number } // Position in percentage (0-100)
+  fontSize: number
+  fontFamily: string
+  color: string
+  alignment: 'left' | 'center' | 'right'
+}
+
 export interface Clip {
   id: string
   name: string
@@ -14,6 +26,14 @@ export interface Clip {
   offset: number
   thumbnail?: string
   speed: number // 0.25x, 0.5x, 1x (normal), 1.5x, 2x
+  volume: number // 0 to 1 (0% to 100%)
+  fadeIn?: number // Duration of fade in transition in ms
+  fadeOut?: number // Duration of fade out transition in ms
+  textOverlays?: TextOverlay[] // Text overlays for this clip
+  // Video effects
+  brightness?: number // -100 to 100 (default: 0)
+  contrast?: number // -100 to 100 (default: 0)
+  saturation?: number // -100 to 100 (default: 0)
 }
 
 export interface TimelineTrack {
@@ -27,15 +47,22 @@ interface ProjectState {
   currentTime: number
   isPlaying: boolean
   zoom: number
+  selectedClipId: string | null
+  isTextEditing: boolean // Flag to prevent accidental deletions when editing text
 }
 
 type ProjectAction =
   | { type: 'ADD_CLIP'; clip: Clip }
   | { type: 'REMOVE_CLIP'; clipId: string }
   | { type: 'UPDATE_CLIP'; clipId: string; updates: Partial<Clip> }
+  | { type: 'ADD_TEXT_OVERLAY'; clipId: string; overlay: TextOverlay }
+  | { type: 'REMOVE_TEXT_OVERLAY'; clipId: string; overlayId: string }
+  | { type: 'UPDATE_TEXT_OVERLAY'; clipId: string; overlayId: string; updates: Partial<TextOverlay> }
   | { type: 'SET_CURRENT_TIME'; time: number }
   | { type: 'SET_PLAYING'; isPlaying: boolean }
   | { type: 'SET_ZOOM'; zoom: number }
+  | { type: 'SET_SELECTED_CLIP'; clipId: string | null }
+  | { type: 'SET_TEXT_EDITING'; isEditing: boolean }
   | { type: 'SPLIT_CLIP'; clipId: string; splitTime: number }
   | { type: 'SET_STATE'; state: ProjectState }
 
@@ -48,6 +75,8 @@ const initialState: ProjectState = {
   currentTime: 0,
   isPlaying: false,
   zoom: 1,
+  selectedClipId: null,
+  isTextEditing: false,
 }
 
 function projectReducer(state: ProjectState, action: ProjectAction): ProjectState {
@@ -83,6 +112,63 @@ function projectReducer(state: ProjectState, action: ProjectAction): ProjectStat
         })),
       }
 
+    case 'ADD_TEXT_OVERLAY': {
+      return {
+        ...state,
+        clips: state.clips.map(c => 
+          c.id === action.clipId 
+            ? { ...c, textOverlays: [...(c.textOverlays || []), action.overlay] }
+            : c
+        ),
+        tracks: state.tracks.map(track => ({
+          ...track,
+          clips: track.clips.map(c => 
+            c.id === action.clipId 
+              ? { ...c, textOverlays: [...(c.textOverlays || []), action.overlay] }
+              : c
+          ),
+        })),
+      }
+    }
+
+    case 'REMOVE_TEXT_OVERLAY': {
+      return {
+        ...state,
+        clips: state.clips.map(c => 
+          c.id === action.clipId 
+            ? { ...c, textOverlays: c.textOverlays?.filter(o => o.id !== action.overlayId) || [] }
+            : c
+        ),
+        tracks: state.tracks.map(track => ({
+          ...track,
+          clips: track.clips.map(c => 
+            c.id === action.clipId 
+              ? { ...c, textOverlays: c.textOverlays?.filter(o => o.id !== action.overlayId) || [] }
+              : c
+          ),
+        })),
+      }
+    }
+
+    case 'UPDATE_TEXT_OVERLAY': {
+      return {
+        ...state,
+        clips: state.clips.map(c => 
+          c.id === action.clipId 
+            ? { ...c, textOverlays: c.textOverlays?.map(o => o.id === action.overlayId ? { ...o, ...action.updates } : o) || [] }
+            : c
+        ),
+        tracks: state.tracks.map(track => ({
+          ...track,
+          clips: track.clips.map(c => 
+            c.id === action.clipId 
+              ? { ...c, textOverlays: c.textOverlays?.map(o => o.id === action.overlayId ? { ...o, ...action.updates } : o) || [] }
+              : c
+          ),
+        })),
+      }
+    }
+
     case 'SET_CURRENT_TIME':
       return { ...state, currentTime: action.time }
 
@@ -91,6 +177,12 @@ function projectReducer(state: ProjectState, action: ProjectAction): ProjectStat
 
           case 'SET_ZOOM':
             return { ...state, zoom: action.zoom }
+
+          case 'SET_SELECTED_CLIP':
+            return { ...state, selectedClipId: action.clipId }
+
+          case 'SET_TEXT_EDITING':
+            return { ...state, isTextEditing: action.isEditing }
 
           case 'SPLIT_CLIP': {
             const clip = state.clips.find(c => c.id === action.clipId)
@@ -161,9 +253,14 @@ interface ProjectContextType {
   addClip: (clip: Clip) => void
   removeClip: (clipId: string) => void
   updateClip: (clipId: string, updates: Partial<Clip>) => void
+  addTextOverlay: (clipId: string, overlay: TextOverlay) => void
+  removeTextOverlay: (clipId: string, overlayId: string) => void
+  updateTextOverlay: (clipId: string, overlayId: string, updates: Partial<TextOverlay>) => void
   setCurrentTime: (time: number) => void
   setPlaying: (isPlaying: boolean) => void
   setZoom: (zoom: number) => void
+  setSelectedClipId: (clipId: string | null) => void
+  setTextEditing: (isEditing: boolean) => void
   splitClip: (clipId: string, splitTime: number) => void
   undo: () => void
   redo: () => void
@@ -273,9 +370,24 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         addClip,
         removeClip,
         updateClip,
+        addTextOverlay: useCallback((clipId: string, overlay: TextOverlay) => {
+          dispatch({ type: 'ADD_TEXT_OVERLAY', clipId, overlay })
+        }, []),
+        removeTextOverlay: useCallback((clipId: string, overlayId: string) => {
+          dispatch({ type: 'REMOVE_TEXT_OVERLAY', clipId, overlayId })
+        }, []),
+        updateTextOverlay: useCallback((clipId: string, overlayId: string, updates: Partial<TextOverlay>) => {
+          dispatch({ type: 'UPDATE_TEXT_OVERLAY', clipId, overlayId, updates })
+        }, []),
         setCurrentTime,
         setPlaying,
         setZoom,
+        setSelectedClipId: useCallback((clipId: string | null) => {
+          dispatch({ type: 'SET_SELECTED_CLIP', clipId })
+        }, []),
+        setTextEditing: useCallback((isEditing: boolean) => {
+          dispatch({ type: 'SET_TEXT_EDITING', isEditing })
+        }, []),
         splitClip,
         undo,
         redo,
