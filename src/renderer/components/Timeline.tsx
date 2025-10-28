@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useCallback, useState, MouseEvent as ReactMouseEvent } from 'react'
-import { useProject, Clip, TextOverlay } from '../context/ProjectContext'
+import { useProject, Clip, AudioClip, TextOverlay } from '../context/ProjectContext'
 
 const Timeline: React.FC = () => {
-  const { state, setCurrentTime, removeClip, updateClip, saveHistory, setSelectedClipId, setZoom, removeTextOverlay } = useProject()
+  const { state, setCurrentTime, removeClip, updateClip, saveHistory, setSelectedClipId, setZoom, removeTextOverlay, removeAudioClip } = useProject()
   const [selectedTextOverlay, setSelectedTextOverlay] = useState<{ clipId: string; overlayId: string } | null>(null)
   const zoom = state.zoom
   const selectedClipId = state.selectedClipId
@@ -618,6 +618,94 @@ const Timeline: React.FC = () => {
                 {/* Playhead handle */}
                 <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 w-5 h-16 bg-red-500 rounded-full opacity-0 hover:opacity-100 transition-opacity" />
               </div>
+            </div>
+          </div>
+        ))}
+
+        {/* Audio Tracks */}
+        {state.audioTracks.map(track => (
+          <div key={track.id} className="h-24 border-b border-gray-800 bg-dark flex relative">
+            {/* Track Header */}
+            <div className="w-20 border-r border-gray-800 bg-dark-tertiary flex flex-col items-center justify-center text-xs text-gray-400">
+              <div>🎵 Audio {track.id + 1}</div>
+            </div>
+
+            {/* Track Content */}
+            <div
+              className="flex-1 relative bg-dark overflow-visible cursor-crosshair"
+              onClick={handleTimelineClick}
+              style={{ minWidth: `${Math.max(timeToPx(totalDuration), 800)}px` }}
+            >
+              {/* Empty track indicator */}
+              {track.clips.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span className="text-xs text-gray-600">Drop audio here</span>
+                </div>
+              )}
+
+              {/* Audio Clips */}
+              {track.clips.map(clip => {
+                const isSelected = selectedClipId === clip.id
+                return (
+                  <div
+                    key={clip.id}
+                    className={`absolute h-16 top-2 rounded-lg border-2 flex items-center justify-center cursor-move shadow-lg transition-all overflow-visible ${
+                      isSelected
+                        ? 'border-pink-400 ring-2 ring-pink-300'
+                        : 'border-pink-600 hover:border-pink-500'
+                    }`}
+                    style={{
+                      left: `${timeToPx(clip.offset)}px`,
+                      width: `${Math.max(timeToPx(clip.duration), 100)}px`,
+                      minWidth: '100px',
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedClipId(clip.id)
+                    }}
+                  >
+                    {/* Audio Waveform or Icon */}
+                    <div className="flex-1 h-full bg-gradient-to-r from-pink-700 to-purple-700 flex items-center justify-center rounded">
+                      <div className="px-2 py-1 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-pink-300" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                        </svg>
+                        <p className="text-[10px] font-semibold text-white truncate">{clip.name}</p>
+                      </div>
+                    </div>
+
+                    {/* Delete Button */}
+                    {isSelected && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          removeAudioClip(clip.id)
+                          setSelectedClipId(null)
+                          saveHistory()
+                        }}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white text-xs shadow-lg"
+                      >
+                        ×
+                      </button>
+                    )}
+
+                    {/* Volume indicator */}
+                    {clip.volume !== 1 && (
+                      <div className="absolute -bottom-6 left-1">
+                        <p className="text-[10px] text-white bg-pink-600 bg-opacity-80 px-1 rounded font-bold">
+                          🔊{Math.round(clip.volume * 100)}%
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+
+              {/* Playhead */}
+              <div
+                className="absolute top-0 bottom-0 w-1 bg-red-500 z-20"
+                style={{ left: `${timeToPx(state.currentTime)}px` }}
+              />
             </div>
           </div>
         ))}
