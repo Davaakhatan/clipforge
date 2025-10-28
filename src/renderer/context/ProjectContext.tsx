@@ -15,6 +15,8 @@ export interface TextOverlay {
   alignment: 'left' | 'center' | 'right'
 }
 
+export type TransitionType = 'none' | 'fade' | 'slide-left' | 'slide-right' | 'slide-up' | 'slide-down' | 'zoom-in' | 'zoom-out' | 'blur'
+
 export interface Clip {
   id: string
   name: string
@@ -29,6 +31,9 @@ export interface Clip {
   volume: number // 0 to 1 (0% to 100%)
   fadeIn?: number // Duration of fade in transition in ms
   fadeOut?: number // Duration of fade out transition in ms
+  transitionIn?: TransitionType // Transition when clip starts
+  transitionOut?: TransitionType // Transition when clip ends
+  transitionDuration?: number // Duration of transition in ms (default: 500)
   textOverlays?: TextOverlay[] // Text overlays for this clip
   // Video effects
   brightness?: number // -100 to 100 (default: 0)

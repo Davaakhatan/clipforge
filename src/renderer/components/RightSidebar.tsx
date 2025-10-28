@@ -297,6 +297,79 @@ const RightSidebar: React.FC = () => {
               </div>
             </div>
 
+            {/* Transitions */}
+            <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Transitions</label>
+              </div>
+              
+              {/* Transition In */}
+              <div className="mb-3">
+                <label className="text-xs text-gray-500 mb-1 block">Transition In</label>
+                <select
+                  value={selectedClip.transitionIn || 'none'}
+                  onChange={(e) => {
+                    updateClip(selectedClip.id, { transitionIn: e.target.value as any })
+                    saveHistory()
+                  }}
+                  className="w-full px-2 py-1 bg-gray-900 border border-gray-600 rounded text-white text-xs"
+                >
+                  <option value="none">None</option>
+                  <option value="fade">Fade In</option>
+                  <option value="slide-left">Slide From Left</option>
+                  <option value="slide-right">Slide From Right</option>
+                  <option value="slide-up">Slide From Bottom</option>
+                  <option value="slide-down">Slide From Top</option>
+                  <option value="zoom-in">Zoom In</option>
+                  <option value="zoom-out">Zoom Out</option>
+                  <option value="blur">Blur</option>
+                </select>
+              </div>
+              
+              {/* Transition Out */}
+              <div className="mb-3">
+                <label className="text-xs text-gray-500 mb-1 block">Transition Out</label>
+                <select
+                  value={selectedClip.transitionOut || 'none'}
+                  onChange={(e) => {
+                    updateClip(selectedClip.id, { transitionOut: e.target.value as any })
+                    saveHistory()
+                  }}
+                  className="w-full px-2 py-1 bg-gray-900 border border-gray-600 rounded text-white text-xs"
+                >
+                  <option value="none">None</option>
+                  <option value="fade">Fade Out</option>
+                  <option value="slide-left">Slide To Left</option>
+                  <option value="slide-right">Slide To Right</option>
+                  <option value="slide-up">Slide To Top</option>
+                  <option value="slide-down">Slide To Bottom</option>
+                  <option value="zoom-in">Zoom In</option>
+                  <option value="zoom-out">Zoom Out</option>
+                  <option value="blur">Blur</option>
+                </select>
+              </div>
+              
+              {/* Transition Duration */}
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Duration (ms)</label>
+                <input
+                  type="number"
+                  min="100"
+                  max="2000"
+                  step="100"
+                  value={selectedClip.transitionDuration || 500}
+                  onChange={(e) => {
+                    updateClip(selectedClip.id, { transitionDuration: parseInt(e.target.value) || 500 })
+                    saveHistory()
+                  }}
+                  className="w-full px-2 py-1 bg-gray-900 border border-gray-600 rounded text-white text-xs"
+                />
+              </div>
+            </div>
+
             {/* Add Text Button */}
             <button
               onClick={() => {
