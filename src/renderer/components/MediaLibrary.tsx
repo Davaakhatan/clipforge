@@ -78,17 +78,22 @@ const MediaLibrary: React.FC = () => {
   }, [])
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 border-b border-gray-800 bg-dark">
-        <h2 className="text-sm font-semibold text-gray-300 mb-3">Media Library</h2>
+    <div className="h-full flex flex-col bg-dark-secondary">
+      <div className="p-4 border-b border-gray-800">
+        <div className="flex items-center gap-2 mb-3">
+          <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <h2 className="text-sm font-bold text-white">Media Library</h2>
+        </div>
         <button
           onClick={handleFileSelect}
-          className="w-full px-4 py-2.5 bg-accent hover:bg-accent-hover rounded-lg text-white font-medium transition-colors flex items-center justify-center gap-2 shadow-lg"
+          className="w-full px-4 py-3 bg-gradient-to-r from-accent to-blue-600 hover:from-blue-600 hover:to-accent rounded-lg text-white font-semibold transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl group"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Import Video
+          <span>Import Video</span>
         </button>
       </div>
 
@@ -98,12 +103,13 @@ const MediaLibrary: React.FC = () => {
         onDragOver={handleDragOver}
       >
         {state.clips.length === 0 ? (
-          <div className="text-center text-gray-500 mt-8">
-            <p className="text-sm">Drop video files here</p>
-            <p className="text-xs mt-2">or click "Import Video"</p>
+          <div className="text-center text-gray-500 mt-12">
+            <div className="text-5xl mb-3">📹</div>
+            <p className="text-sm font-medium">Drop video files here</p>
+            <p className="text-xs mt-2 text-gray-600">or click "Import Video"</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
       {state.clips.map(clip => (
         <div
           key={clip.id}
@@ -112,40 +118,61 @@ const MediaLibrary: React.FC = () => {
             e.dataTransfer.setData('text/plain', clip.id)
             e.dataTransfer.effectAllowed = 'move'
           }}
-          className="group p-3 bg-dark-secondary rounded-lg border border-gray-800 hover:border-accent hover:shadow-lg transition-all relative overflow-hidden cursor-grab active:cursor-grabbing"
+          className="group p-3 bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-xl border border-gray-700/50 hover:border-accent/50 hover:shadow-xl transition-all relative overflow-hidden cursor-grab active:cursor-grabbing backdrop-blur-sm"
         >
           {importing.includes(clip.filePath) && (
-            <div className="absolute inset-0 bg-dark bg-opacity-90 flex items-center justify-center z-10 rounded-lg">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                <div className="text-sm text-accent">Processing...</div>
+            <div className="absolute inset-0 bg-dark/95 bg-opacity-90 flex items-center justify-center z-10 rounded-xl">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-10 h-10 border-3 border-accent border-t-transparent rounded-full animate-spin" />
+                <div className="text-sm font-semibold text-accent">Processing...</div>
               </div>
             </div>
           )}
-          <div className="w-full h-28 bg-gray-800 rounded-lg mb-2 flex items-center justify-center overflow-hidden">
+          
+          {/* Thumbnail */}
+          <div className="w-full h-32 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg mb-3 flex items-center justify-center overflow-hidden border border-gray-700/50 group-hover:border-accent/30 transition-colors">
             {clip.thumbnail ? (
               <img src={clip.thumbnail} alt={clip.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
             ) : (
-              <span className="text-xs text-gray-500">Loading...</span>
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 border-2 border-gray-600 border-t-accent rounded-full animate-spin" />
+                <span className="text-xs text-gray-500">Loading...</span>
+              </div>
             )}
           </div>
-          <p className="text-xs font-medium truncate mb-1">{clip.name}</p>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-gray-500">{formatTime(clip.duration)}</span>
-            <span className="text-gray-600">📹 {Math.round(clip.duration / 1000)}s</span>
-          </div>
           
-          {/* Delete Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              removeClip(clip.id)
-              saveHistory() // Save state for undo/redo
-            }}
-            className="absolute top-2 right-2 w-6 h-6 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            ×
-          </button>
+          {/* Info */}
+          <div className="space-y-1.5">
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-xs font-bold text-white truncate flex-1">{clip.name}</p>
+              {/* Delete Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  removeClip(clip.id)
+                  saveHistory()
+                }}
+                className="w-5 h-5 bg-red-600/80 hover:bg-red-600 rounded-md flex items-center justify-center text-white text-xs shadow-md opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                title="Delete clip"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5 text-gray-400">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{formatTime(clip.duration)}</span>
+              </div>
+              <div className="flex items-center gap-1 text-accent font-semibold">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>Video</span>
+              </div>
+            </div>
+          </div>
         </div>
       ))}
           </div>
