@@ -4,18 +4,63 @@ A professional desktop video editor built with Electron, React, and FFmpeg. Impo
 
 ## 🎯 Project Overview
 
-ClipForge is a desktop video editor inspired by CapCut, built in 72 hours for the Gauntlet AI cohort challenge. It features:
+ClipForge is a professional desktop video editor inspired by CapCut, built for the Gauntlet AI cohort challenge. It features industry-standard video and audio editing capabilities:
 
+### 🎬 Core Video Features
 - ✅ **Video Import** - Drag & drop or file picker (MP4, MOV, WebM)
 - ✅ **CapCut-style Timeline** - Interactive timeline with adaptive zoom
 - ✅ **Clip Trimming** - Drag white bars to trim in/out points
 - ✅ **Clip Splitting** - Press `S` to split at playhead
+- ✅ **Clip Duplication** - Ctrl/Cmd+D to duplicate clips
 - ✅ **Undo/Redo** - Cmd+Z / Cmd+Shift+Z
 - ✅ **Video Preview** - Playback with play/pause controls
 - ✅ **Screen Recording** - Record screen with audio, auto-minimize to dock
 - ✅ **Webcam Recording** - Record webcam with microphone
 - ✅ **Export to MP4** - Export your timeline composition
 - ✅ **Keyboard Shortcuts** - Space (play/pause), Arrows (seek), S (split), Del (delete)
+
+### 🎵 Advanced Audio Features
+- ✅ **Multi-track Audio** - Separate audio tracks with independent controls
+- ✅ **Audio Waveform** - Visual waveform representation for audio clips
+- ✅ **Audio Effects** - Reverb, Echo, Distortion, EQ processing
+- ✅ **Volume Automation** - Keyframes and curve editing for dynamic volume
+- ✅ **Audio Crossfade** - Smooth transitions between overlapping clips
+- ✅ **Audio Normalization** - Consistent volume levels across clips
+- ✅ **Audio Sync Tools** - Manual offset adjustment for lip-sync
+- ✅ **Multi-track Mixing** - Track-level volume, pan, mute, solo controls
+- ✅ **Master Controls** - Global volume and mute for entire project
+
+### 🎯 Professional Tools
+- ✅ **Batch Operations** - Apply effects to multiple clips simultaneously
+- ✅ **Multi-select** - Ctrl/Cmd+click to select multiple clips
+- ✅ **Timeline Navigation** - Frame-perfect navigation and zoom presets
+- ✅ **Mini Timeline** - Overview of entire project with viewport indicator
+- ✅ **Text Overlays** - Add customizable text with drag-to-position
+- ✅ **Video Effects** - Brightness, contrast, saturation adjustments
+- ✅ **Transitions** - Fade, slide, zoom, blur effects between clips
+- ✅ **Speed Control** - Variable playback speed (0.25x to 4x)
+
+## 🆕 Latest Updates
+
+### Professional Audio Editing Suite
+- **Multi-track Audio System**: Complete audio editing with separate tracks
+- **Advanced Audio Effects**: Professional-grade reverb, echo, distortion, and EQ
+- **Volume Automation**: Keyframe-based volume curves for dynamic audio
+- **Audio Crossfade**: Smooth transitions between overlapping audio clips
+- **Audio Normalization**: Automatic volume leveling across all clips
+- **Lip-sync Tools**: Manual offset adjustment for perfect audio-video sync
+
+### Enhanced Timeline & Navigation
+- **Professional Timeline**: Frame-perfect navigation with zoom presets
+- **Mini Timeline Overview**: Bird's-eye view of entire project
+- **Batch Operations**: Multi-select and apply effects to multiple clips
+- **Enhanced Visual Feedback**: Color-coded selection states and professional styling
+
+### Industry-Standard Features
+- **Master Audio Controls**: Global volume and mute for entire project
+- **Track-level Mixing**: Individual volume, pan, mute, and solo per track
+- **Professional UI/UX**: Optimized layout with better space utilization
+- **Advanced Keyboard Shortcuts**: Comprehensive hotkey support
 
 ## 🚀 Quick Start
 
