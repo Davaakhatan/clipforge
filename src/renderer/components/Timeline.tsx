@@ -2,11 +2,12 @@ import React, { useRef, useEffect, useCallback, useState, MouseEvent as ReactMou
 import { useProject, Clip, AudioClip, TextOverlay } from '../context/ProjectContext'
 
 const Timeline: React.FC = () => {
-  const { state, setCurrentTime, removeClip, updateClip, saveHistory, setSelectedClipId, setZoom, removeTextOverlay, removeAudioClip } = useProject()
+  const { state, setCurrentTime, removeClip, updateClip, saveHistory, setSelectedClipId, setZoom, removeTextOverlay, removeAudioClip, updateAudioClip } = useProject()
   const [selectedTextOverlay, setSelectedTextOverlay] = useState<{ clipId: string; overlayId: string } | null>(null)
   const zoom = state.zoom
   const selectedClipId = state.selectedClipId
   const [isDraggingClip, setIsDraggingClip] = useState(false)
+  const [isDraggingAudioClip, setIsDraggingAudioClip] = useState(false)
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false)
   const [isResizingClip, setIsResizingClip] = useState<'left' | 'right' | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, startTime: 0 })
@@ -150,6 +151,17 @@ const Timeline: React.FC = () => {
     })
   }, [])
 
+  // Handle audio clip drag
+  const handleAudioClipMouseDown = useCallback((e: ReactMouseEvent, clip: AudioClip) => {
+    e.stopPropagation()
+    setSelectedClipId(clip.id)
+    setIsDraggingAudioClip(true)
+    setDragOffset({
+      x: e.clientX,
+      startTime: clip.offset
+    })
+  }, [])
+
   // Handle resize start
   const handleResizeStart = useCallback((e: ReactMouseEvent, side: 'left' | 'right', clip: Clip) => {
     e.stopPropagation()
@@ -163,11 +175,22 @@ const Timeline: React.FC = () => {
 
   // Drag and resize handler
   useEffect(() => {
-    if ((!isDraggingClip && !isResizingClip) || !selectedClipId) return
+    if ((!isDraggingClip && !isDraggingAudioClip && !isResizingClip) || !selectedClipId) return
 
     const handleMouseMove = (e: MouseEvent) => {
       const dx = e.clientX - dragOffset.x
       const dt = pxToTime(dx)
+      
+      if (isDraggingAudioClip) {
+        // Handle audio clip drag
+        const audioClip = state.audioClips.find(c => c.id === selectedClipId)
+        if (!audioClip) return
+        
+        const newOffset = Math.max(0, dragOffset.startTime + dt)
+        const snappedOffset = snapToGrid(newOffset)
+        updateAudioClip(selectedClipId, { offset: snappedOffset })
+        return
+      }
       
       const clip = state.clips.find(c => c.id === selectedClipId)
       if (!clip) return
@@ -208,6 +231,7 @@ const Timeline: React.FC = () => {
 
     const handleMouseUp = () => {
       setIsDraggingClip(false)
+      setIsDraggingAudioClip(false)
       setIsResizingClip(null)
       setTrimFeedback({ side: null, clipId: null, newDuration: 0 })
       
@@ -222,7 +246,7 @@ const Timeline: React.FC = () => {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isDraggingClip, isResizingClip, selectedClipId, dragOffset, pxToTime, updateClip, state.clips, saveHistory])
+  }, [isDraggingClip, isDraggingAudioClip, isResizingClip, selectedClipId, dragOffset, pxToTime, updateClip, updateAudioClip, state.clips, state.audioClips, saveHistory])
 
   // Format time for display
   const formatTime = (ms: number) => {
@@ -663,6 +687,7 @@ const Timeline: React.FC = () => {
                       e.stopPropagation()
                       setSelectedClipId(clip.id)
                     }}
+                    onMouseDown={(e) => handleAudioClipMouseDown(e, clip)}
                   >
                     {/* Audio Waveform or Icon */}
                     <div className="flex-1 h-full bg-gradient-to-r from-pink-700 to-purple-700 flex items-center justify-center rounded">
