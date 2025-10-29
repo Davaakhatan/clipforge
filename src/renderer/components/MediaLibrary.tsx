@@ -1,6 +1,62 @@
 import React, { useCallback, useState } from 'react'
 import { useProject, Clip, AudioClip } from '../context/ProjectContext'
 
+interface ImageDurationDialogProps {
+  onConfirm: (duration: number) => void
+  onCancel: () => void
+}
+
+const ImageDurationDialog: React.FC<ImageDurationDialogProps> = ({ onConfirm, onCancel }) => {
+  const [duration, setDuration] = useState('3')
+
+  const handleConfirm = () => {
+    const parsedDuration = parseFloat(duration) || 3
+    if (parsedDuration > 0) {
+      onConfirm(parsedDuration)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={onCancel}>
+      <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md mx-4 border border-gray-700" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-xl font-bold text-white mb-4">Image Duration</h3>
+        <p className="text-gray-400 text-sm mb-4">How long should this image be displayed? (in seconds)</p>
+        <input
+          type="number"
+          min="0.1"
+          step="0.1"
+          value={duration}
+          onChange={(e) => setDuration(e.target.value)}
+          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white mb-4 focus:outline-none focus:ring-2 focus:ring-accent"
+          placeholder="3"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleConfirm()
+            } else if (e.key === 'Escape') {
+              onCancel()
+            }
+          }}
+        />
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-white font-medium transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            className="flex-1 px-4 py-2 bg-accent hover:bg-blue-600 rounded-lg text-white font-medium transition-colors"
+          >
+            Import
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const formatTime = (ms: number) => {
   const totalSeconds = Math.floor(ms / 1000)
   const minutes = Math.floor(totalSeconds / 60)
@@ -11,6 +67,8 @@ const formatTime = (ms: number) => {
 const MediaLibrary: React.FC = () => {
   const { state, addClip, removeClip, addAudioClip, removeAudioClip, saveHistory } = useProject()
   const [importing, setImporting] = useState<string[]>([])
+  const [showImageDurationDialog, setShowImageDurationDialog] = useState(false)
+  const [pendingImageFiles, setPendingImageFiles] = useState<Array<{ filePath: string; fileName: string }>>([])
 
   const importVideoFile = useCallback(async (filePath: string, fileName: string) => {
     try {
@@ -77,6 +135,44 @@ const MediaLibrary: React.FC = () => {
     }
   }, [addAudioClip, saveHistory])
 
+  const importImageFile = useCallback(async (filePath: string, fileName: string, duration: number = 3) => {
+    try {
+      setImporting(prev => [...prev, filePath])
+      
+      // Import image and convert to video
+      const result = await window.electronAPI.ipc.invoke('importImage', { filePath, duration })
+      
+      if (result.success) {
+        // Create a clip from the converted video
+        const clip: Clip = {
+          id: Math.random().toString(36).substring(7),
+          name: fileName,
+          filePath: result.videoPath, // Use the converted video path
+          duration: result.metadata.duration * 1000, // Convert seconds to ms
+          startTime: 0,
+          endTime: result.metadata.duration * 1000,
+          trackId: 0,
+          offset: 0,
+          thumbnail: result.thumbnailPath,
+          speed: 1,
+          volume: 1,
+          muted: false,
+          fadeIn: 0,
+          fadeOut: 0,
+          brightness: 0,
+          contrast: 0,
+          saturation: 0,
+        }
+        addClip(clip)
+        saveHistory()
+      }
+    } catch (error) {
+      console.error('Error importing image:', error)
+    } finally {
+      setImporting(prev => prev.filter(p => p !== filePath))
+    }
+  }, [addClip, saveHistory])
+
   const handleFileSelect = useCallback(async () => {
     try {
       // Open native file picker dialog
@@ -108,6 +204,40 @@ const MediaLibrary: React.FC = () => {
     }
   }, [importAudioFile])
 
+  const handleImageFileSelect = useCallback(async () => {
+    try {
+      const filePaths = await window.electronAPI?.ipc?.invoke('showOpenDialogImage')
+      
+      if (filePaths && filePaths.length > 0) {
+        // Store pending files and show duration dialog
+        const files = filePaths.map(filePath => ({
+          filePath,
+          fileName: filePath.split('/').pop() || 'image'
+        }))
+        setPendingImageFiles(files)
+        setShowImageDurationDialog(true)
+      }
+    } catch (error) {
+      console.error('Error opening image file picker:', error)
+    }
+  }, [])
+
+  const handleImageDurationConfirm = useCallback(async (duration: number) => {
+    setShowImageDurationDialog(false)
+    
+    // Import all pending image files with the specified duration
+    for (const file of pendingImageFiles) {
+      await importImageFile(file.filePath, file.fileName, duration)
+    }
+    
+    setPendingImageFiles([])
+  }, [pendingImageFiles, importImageFile])
+
+  const handleImageDurationCancel = useCallback(() => {
+    setShowImageDurationDialog(false)
+    setPendingImageFiles([])
+  }, [])
+
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault()
     const files = Array.from(e.dataTransfer.files)
@@ -115,17 +245,27 @@ const MediaLibrary: React.FC = () => {
     for (const file of files) {
       if (file.type.startsWith('video/')) {
         await importVideoFile(file.path, file.name)
+      } else if (file.type.startsWith('image/')) {
+        // Default 3 seconds for dropped images
+        await importImageFile(file.path, file.name, 3)
       }
     }
-  }, [importVideoFile])
+  }, [importVideoFile, importImageFile])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
   }, [])
 
   return (
-    <div className="h-full flex flex-col bg-dark-secondary">
-      <div className="p-4 border-b border-gray-800">
+    <>
+      {showImageDurationDialog && (
+        <ImageDurationDialog
+          onConfirm={handleImageDurationConfirm}
+          onCancel={handleImageDurationCancel}
+        />
+      )}
+      <div className="h-full flex flex-col bg-dark-secondary">
+        <div className="p-4 border-b border-gray-800">
         <div className="flex items-center gap-2 mb-3">
           <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -152,6 +292,16 @@ const MediaLibrary: React.FC = () => {
           </svg>
           <span>Import Audio</span>
         </button>
+
+        <button
+          onClick={handleImageFileSelect}
+          className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-teal-600 hover:from-teal-600 hover:to-green-600 rounded-lg text-white font-semibold transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl group"
+        >
+          <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span>Import Image</span>
+        </button>
       </div>
       </div>
 
@@ -163,8 +313,8 @@ const MediaLibrary: React.FC = () => {
         {(state.clips.length === 0 && state.audioClips.length === 0) ? (
           <div className="text-center text-gray-500 mt-12">
             <div className="text-5xl mb-3">📹</div>
-            <p className="text-sm font-medium">Drop video files here</p>
-            <p className="text-xs mt-2 text-gray-600">or click "Import Video/Audio"</p>
+            <p className="text-sm font-medium">Drop video, audio, or image files here</p>
+            <p className="text-xs mt-2 text-gray-600">or click "Import" buttons above</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -300,7 +450,8 @@ const MediaLibrary: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   )
 }
 

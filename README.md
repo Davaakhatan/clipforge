@@ -8,6 +8,7 @@ ClipForge is a professional desktop video editor inspired by CapCut, built for t
 
 ### 🎬 Core Video Features
 - ✅ **Video Import** - Drag & drop or file picker (MP4, MOV, WebM)
+- ✅ **Image/Photo Import** - Import images (JPG, PNG, WebP, GIF, BMP) and convert to video clips
 - ✅ **CapCut-style Timeline** - Interactive timeline with adaptive zoom
 - ✅ **Clip Trimming** - Drag white bars to trim in/out points
 - ✅ **Clip Splitting** - Press `S` to split at playhead
@@ -51,6 +52,13 @@ ClipForge is a professional desktop video editor inspired by CapCut, built for t
 - ✅ **Smart Video Selection** - Choose from media library or upload new videos for AI processing
 
 ## 🆕 Latest Updates
+
+### Image/Photo Support
+- **Image Import**: Import photos and images (JPG, PNG, WebP, GIF, BMP) into your project
+- **Custom Duration**: Set how long each image should display (default 3 seconds)
+- **Image-to-Video Conversion**: Images are automatically converted to video clips using FFmpeg
+- **Drag & Drop**: Drop images directly into the media library
+- **Seamless Integration**: Imported images work exactly like video clips on the timeline
 
 ### Project Management & Auto-Save System
 - **Save Projects**: Save your work as `.clipforge` project files for later editing
@@ -132,10 +140,19 @@ The packaged app will be in `dist/` directory:
 4. **Auto-Save**: Projects are automatically saved every 5 minutes in the background
 5. **Crash Recovery**: If the app crashes, you'll be prompted to restore your auto-saved project on next launch
 
-### Import Videos
-1. Click "Import Video" or drag & drop video files
-2. Videos appear in Media Library with thumbnails
-3. Clips automatically appear on Timeline Track 1
+### Import Media Files
+1. **Videos**: Click "Import Video" or drag & drop video files (MP4, MOV, WebM)
+   - Videos appear in Media Library with thumbnails
+   - Clips automatically appear on Timeline Track 1
+
+2. **Images**: Click "Import Image" or drag & drop image files (JPG, PNG, WebP, GIF, BMP)
+   - Dialog prompts for display duration (default 3 seconds)
+   - Images are converted to video clips automatically
+   - Appear in Media Library and can be added to timeline like videos
+
+3. **Audio**: Click "Import Audio" or drag & drop audio files
+   - Audio clips appear in Media Library
+   - Can be dragged to audio tracks on the timeline
 
 ### Edit Timeline
 - **Trim**: Select a clip, drag the white bars at the edges
@@ -252,8 +269,15 @@ src/
 - [x] Unsaved changes tracking
 - [x] Recent projects history
 
+### ✅ Image/Photo Support (Complete)
+- [x] Import images (JPG, PNG, WebP, GIF, BMP)
+- [x] Custom duration dialog for image display time
+- [x] Image-to-video conversion using FFmpeg
+- [x] Drag & drop image support
+- [x] Thumbnail generation for imported images
+- [x] Images work as video clips on timeline
+
 ### ⏳ Future Enhancements
-- [ ] Image/Photo import support
 - [ ] Export presets (YouTube, Instagram, TikTok)
 - [ ] Timeline snapping
 - [ ] Copy/paste clips

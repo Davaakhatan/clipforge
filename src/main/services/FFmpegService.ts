@@ -22,6 +22,13 @@ export interface AudioMetadata {
   channels?: number
 }
 
+export interface ImageMetadata {
+  width: number
+  height: number
+  size: number
+  format: string
+}
+
 class FFmpegService {
   /**
    * Get video metadata (duration, resolution, file size)
@@ -86,7 +93,60 @@ class FFmpegService {
   }
 
   /**
-   * Generate a thumbnail at a specific timestamp
+   * Get image metadata (width, height, file size, format)
+   */
+  getImageMetadata(filePath: string): Promise<ImageMetadata> {
+    return new Promise((resolve, reject) => {
+      const stats = fs.statSync(filePath)
+      
+      ffmpeg.ffprobe(filePath, (err, metadata) => {
+        if (err) {
+          reject(err)
+          return
+        }
+
+        const videoStream = metadata.streams.find(stream => stream.codec_type === 'video' || stream.width)
+        
+        if (!videoStream || !videoStream.width || !videoStream.height) {
+          reject(new Error('Invalid image file'))
+          return
+        }
+
+        resolve({
+          width: videoStream.width || 0,
+          height: videoStream.height || 0,
+          size: stats.size,
+          format: metadata.format.format_name || '',
+        })
+      })
+    })
+  }
+
+  /**
+   * Convert image to video with specified duration (default 3 seconds)
+   */
+  imageToVideo(
+    imagePath: string,
+    outputPath: string,
+    duration: number = 3
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      // Create a video from image by looping it for the specified duration
+      ffmpeg(imagePath)
+        .inputOptions(['-loop', '1'])
+        .inputOptions(['-framerate', '1']) // 1 frame per second for static image
+        .outputOptions(['-t', duration.toString()])
+        .outputOptions(['-pix_fmt', 'yuv420p']) // Ensure compatibility
+        .outputOptions(['-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2']) // Ensure even dimensions
+        .output(outputPath)
+        .on('end', () => resolve(outputPath))
+        .on('error', (err) => reject(err))
+        .run()
+    })
+  }
+
+  /**
+   * Generate a thumbnail at a specific timestamp (for videos)
    */
   generateThumbnail(
     videoPath: string,
@@ -102,6 +162,24 @@ class FFmpegService {
         })
         .on('end', () => resolve(outputPath))
         .on('error', (err) => reject(err))
+    })
+  }
+
+  /**
+   * Generate thumbnail from image (just copy the image)
+   */
+  generateImageThumbnail(
+    imagePath: string,
+    outputPath: string
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      // For images, we can just copy/resize them for thumbnails
+      ffmpeg(imagePath)
+        .outputOptions(['-vf', 'scale=320:-1']) // Scale to 320px width, maintain aspect ratio
+        .output(outputPath)
+        .on('end', () => resolve(outputPath))
+        .on('error', (err) => reject(err))
+        .run()
     })
   }
 

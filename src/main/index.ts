@@ -116,6 +116,35 @@ ipcMain.handle('importAudio', async (event, { filePath }) => {
   }
 })
 
+// Image processing handlers
+ipcMain.handle('importImage', async (event, { filePath, duration = 3 }) => {
+  try {
+    const metadata = await ffmpegService.getImageMetadata(filePath)
+    
+    // Convert image to video
+    const tempVideoPath = path.join(app.getPath('temp'), `${path.basename(filePath, path.extname(filePath))}_${Date.now()}.mp4`)
+    await ffmpegService.imageToVideo(filePath, tempVideoPath, duration)
+    
+    // Generate thumbnail (just resize the image)
+    const thumbnailPath = path.join(app.getPath('temp'), `${path.basename(filePath, path.extname(filePath))}_thumb.jpg`)
+    await ffmpegService.generateImageThumbnail(filePath, thumbnailPath)
+    
+    // Get video metadata after conversion
+    const videoMetadata = await ffmpegService.getMetadata(tempVideoPath)
+    
+    return { 
+      success: true, 
+      metadata: videoMetadata,
+      imageMetadata: metadata,
+      videoPath: tempVideoPath,
+      thumbnailPath 
+    }
+  } catch (error) {
+    console.error('Error importing image:', error)
+    return { success: false, error: error.message }
+  }
+})
+
 ipcMain.handle('exportVideo', async (event, { clips, outputPath }) => {
   try {
     await ffmpegService.exportProject(clips, outputPath, (progress) => {
@@ -153,6 +182,22 @@ ipcMain.handle('showOpenDialog', async () => {
     properties: ['openFile', 'multiSelections'],
     filters: [
       { name: 'Video Files', extensions: ['mp4', 'mov', 'avi', 'mkv', 'webm'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+  })
+  
+  if (!result.canceled) {
+    return result.filePaths
+  }
+  return []
+})
+
+ipcMain.handle('showOpenDialogImage', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Import Image',
+    properties: ['openFile', 'multiSelections'],
+    filters: [
+      { name: 'Image Files', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'] },
       { name: 'All Files', extensions: ['*'] },
     ],
   })
