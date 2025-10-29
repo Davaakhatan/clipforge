@@ -342,7 +342,10 @@ const Header: React.FC = () => {
       )}
 
       {/* Header */}
-      <div className="h-10 bg-dark border-b border-gray-800/50 flex items-center justify-between px-3">
+      <div 
+        className="h-10 bg-dark border-b border-gray-800/50 flex items-center justify-between px-3"
+        style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+      >
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-gray-800 rounded flex items-center justify-center text-gray-300 text-xs font-medium border border-gray-700/50">
@@ -355,6 +358,7 @@ const Header: React.FC = () => {
             <button
               onClick={handleNew}
               className="px-2 py-1 bg-gray-800/30 hover:bg-gray-700/50 rounded text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 border border-gray-700/30"
+              style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               title="New Project (Cmd/Ctrl+N)"
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -365,6 +369,7 @@ const Header: React.FC = () => {
             <button
               onClick={handleLoad}
               className="px-2 py-1 bg-gray-800/30 hover:bg-gray-700/50 rounded text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 border border-gray-700/30"
+              style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               title="Open Project (Cmd/Ctrl+O)"
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -379,6 +384,7 @@ const Header: React.FC = () => {
                   ? 'bg-gray-700/50 hover:bg-gray-600/50 border-gray-600/50 text-gray-300' 
                   : 'bg-gray-800/30 hover:bg-gray-700/50 border-gray-700/30 text-gray-400 hover:text-white'
               }`}
+              style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               title="Save Project (Cmd/Ctrl+S)"
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -395,6 +401,7 @@ const Header: React.FC = () => {
               onClick={undo}
               disabled={!canUndo}
               className="px-2 py-1 bg-gray-800/30 hover:bg-gray-700/50 disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs text-gray-400 hover:text-white transition-colors border border-gray-700/30"
+              style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               title="Undo (Cmd/Ctrl+Z)"
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -405,6 +412,7 @@ const Header: React.FC = () => {
               onClick={redo}
               disabled={!canRedo}
               className="px-2 py-1 bg-gray-800/30 hover:bg-gray-700/50 disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs text-gray-400 hover:text-white transition-colors border border-gray-700/30"
+              style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               title="Redo (Cmd/Ctrl+Shift+Z)"
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -419,12 +427,13 @@ const Header: React.FC = () => {
             onClick={handleExportClick}
             disabled={exporting || state.clips.length === 0}
             className="px-2.5 py-1 bg-gray-800/50 hover:bg-gray-700/50 disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs font-medium text-gray-300 border border-gray-700/50 transition-colors"
+            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
           >
             Export
           </button>
         </div>
 
-        <div className="flex items-center">
+        <div className="flex items-center" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
           <button
             onClick={handleMinimize}
             className="w-8 h-8 flex items-center justify-center hover:bg-gray-800/50 rounded transition-colors text-gray-400 hover:text-white"
