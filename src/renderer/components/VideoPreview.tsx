@@ -448,6 +448,39 @@ const VideoPreview: React.FC = () => {
       filters.push(`saturate(${saturationValue})`)
     }
     
+    // Blur: 0 to 100 pixels
+    const blur = currentClip.blur || 0
+    if (blur > 0) {
+      filters.push(`blur(${blur / 10}px)`) // Convert 0-100 to 0-10px for reasonable blur
+    }
+    
+    // Sharpen: 0 to 100 (using contrast trick)
+    const sharpen = currentClip.sharpen || 0
+    if (sharpen > 0) {
+      // Sharpen is achieved by increasing contrast around edges
+      filters.push(`contrast(${1 + sharpen / 50})`) // Boost contrast for sharpening effect
+    }
+    
+    // Grayscale: 0 to 100 percentage
+    const grayscale = currentClip.grayscale || 0
+    if (grayscale > 0) {
+      filters.push(`grayscale(${grayscale}%)`)
+    }
+    
+    // Sepia: 0 to 100 percentage
+    const sepia = currentClip.sepia || 0
+    if (sepia > 0) {
+      filters.push(`sepia(${sepia}%)`)
+    }
+    
+    // Vintage effect: combination of sepia, reduced saturation, slight blur
+    if (currentClip.vintage) {
+      filters.push('sepia(40%) saturate(80%) contrast(1.1) brightness(0.95)')
+      if (!filters.find(f => f.startsWith('blur'))) {
+        filters.push('blur(0.5px)') // Subtle blur for vintage look
+      }
+    }
+    
     return filters.join(' ') || 'none'
   }
 

@@ -39,8 +39,10 @@ ClipForge is a professional desktop video editor inspired by CapCut, built for t
 - ✅ **Timeline Navigation** - Frame-perfect navigation and zoom presets
 - ✅ **Mini Timeline** - Overview of entire project with viewport indicator
 - ✅ **Text Overlays** - Add customizable text with drag-to-position
-- ✅ **Video Effects** - Brightness, contrast, saturation adjustments
+- ✅ **Video Effects** - Brightness, contrast, saturation, blur, sharpen, grayscale, sepia, vintage filters
 - ✅ **Transitions** - Fade, slide, zoom, blur effects between clips
+- ✅ **Clip Grouping** - Group multiple clips to move them together as one unit
+- ✅ **Timeline Markers** - Add bookmarks at important points for quick navigation
 - ✅ **Speed Control** - Variable playback speed (0.25x to 4x)
 - ✅ **AI-Powered Tools** - Smart video enhancement with OpenAI integration
   - Auto Captions generation
@@ -155,10 +157,13 @@ The packaged app will be in `dist/` directory:
    - Can be dragged to audio tracks on the timeline
 
 ### Edit Timeline
-- **Trim**: Select a clip, drag the white bars at the edges
+- **Trim**: Select a clip, drag the thin white bars at the left/right edges to trim
+- **Move**: Drag clips by clicking and dragging the center area to reposition
 - **Split**: Position playhead and press `S`
-- **Move**: Drag clips to reposition
 - **Delete**: Select clip and press `Del` or click × button
+- **Group Clips**: Select multiple clips (Cmd/Ctrl+click), then press `Cmd/Ctrl+G` or use Batch Operations panel to group them - grouped clips move together
+- **Add Markers**: Click the marker button in timeline header to add a bookmark at playhead position
+- **Video Filters**: Use the Video Effects section in RightSidebar to apply blur, sharpen, grayscale, sepia, or vintage effects
 
 ### Playback
 - **Play/Pause**: Space bar or click play button
@@ -206,6 +211,7 @@ The packaged app will be in `dist/` directory:
 | `Cmd+Z` | Undo |
 | `Cmd+Shift+Z` | Redo |
 | `Delete` | Delete selected clip |
+| `Cmd+G` | Group/Ungroup selected clips |
 | `Cmd+S` | Save Project (via Save button) |
 | `Cmd+O` | Open Project (via Open button) |
 | `Cmd+N` | New Project (via New button) |
@@ -289,13 +295,17 @@ src/
 - [x] Real-time preview - See rotation/flip instantly in video preview
 - [x] Export support - Rotation/flip applied during video export
 
+### ✅ Phase 4 Features (Complete)
+- [x] **Additional Video Filters** - Blur, sharpen, sepia, grayscale, and vintage effects with real-time preview
+- [x] **Timeline Markers/Bookmarks** - Add markers at important points, jump to markers, label them, delete them
+- [x] **Clip Grouping** - Group multiple clips together so they move as one unit (Cmd/Ctrl+G or use Batch Operations)
+- [x] **Enhanced Drag & Trim** - Smooth drag-to-move and trim functionality for both video and audio clips
+- [x] **Frame Numbers** - Display frame numbers on timeline rulers (at 30fps intervals)
+
 ### ⏳ Future Enhancements
-- [ ] Additional video filters (blur, sharpen, sepia, grayscale, vintage)
-- [ ] Timeline markers/bookmarks - Add markers for important points
-- [ ] Sequence/clip grouping - Group multiple clips to move together
 - [ ] Nested timelines - Create sequences within sequences
 - [ ] Performance optimization for large projects
-- [ ] Timeline rulers with frame numbers
+- [ ] Additional transition effects
 
 ## 🎨 UI/UX Highlights
 

@@ -18,6 +18,12 @@ export interface TextOverlay {
   alignment: 'left' | 'center' | 'right'
 }
 
+export interface TimelineMarker {
+  id: string
+  time: number // Time in milliseconds
+  label?: string // Optional label/note
+}
+
 export type TransitionType = 'none' | 'fade' | 'slide-left' | 'slide-right' | 'slide-up' | 'slide-down' | 'zoom-in' | 'zoom-out' | 'blur'
 
 export interface Clip {
@@ -43,10 +49,16 @@ export interface Clip {
   brightness?: number // -100 to 100 (default: 0)
   contrast?: number // -100 to 100 (default: 0)
   saturation?: number // -100 to 100 (default: 0)
+  blur?: number // 0 to 100 (default: 0, in pixels)
+  sharpen?: number // 0 to 100 (default: 0)
+  sepia?: number // 0 to 100 (default: 0, percentage)
+  grayscale?: number // 0 to 100 (default: 0, percentage)
+  vintage?: boolean // Vintage/old film effect (default: false)
   // Rotation and flip
   rotation?: number // 0, 90, 180, 270 degrees (default: 0)
   flipHorizontal?: boolean // Horizontal flip (default: false)
   flipVertical?: boolean // Vertical flip (default: false)
+  groupId?: string // Group ID for grouping multiple clips together
 }
 
 export interface TimelineTrack {
@@ -128,6 +140,7 @@ interface ProjectState {
   selectedClipId: string | null
   selectedClipIds: string[] // Multi-select support
   isTextEditing: boolean // Flag to prevent accidental deletions when editing text
+  markers: TimelineMarker[] // Timeline markers/bookmarks
 }
 
 type ProjectAction =
@@ -164,6 +177,11 @@ type ProjectAction =
   | { type: 'BATCH_UPDATE_AUDIO_CLIPS'; clipIds: string[]; updates: Partial<AudioClip> }
   | { type: 'SET_TEXT_EDITING'; isEditing: boolean }
   | { type: 'SPLIT_CLIP'; clipId: string; splitTime: number }
+  | { type: 'ADD_MARKER'; marker: TimelineMarker }
+  | { type: 'REMOVE_MARKER'; markerId: string }
+  | { type: 'UPDATE_MARKER'; markerId: string; updates: Partial<TimelineMarker> }
+  | { type: 'GROUP_CLIPS'; clipIds: string[] }
+  | { type: 'UNGROUP_CLIPS'; clipIds: string[] }
   | { type: 'SET_STATE'; state: ProjectState }
 
 const initialState: ProjectState = {
@@ -184,6 +202,7 @@ const initialState: ProjectState = {
   selectedClipId: null,
   selectedClipIds: [],
   isTextEditing: false,
+  markers: [],
 }
 
 function projectReducer(state: ProjectState, action: ProjectAction): ProjectState {
@@ -665,6 +684,58 @@ function projectReducer(state: ProjectState, action: ProjectAction): ProjectStat
           case 'SET_TEXT_EDITING':
             return { ...state, isTextEditing: action.isEditing }
 
+          case 'ADD_MARKER':
+            return {
+              ...state,
+              markers: [...state.markers, action.marker],
+            }
+          
+          case 'REMOVE_MARKER':
+            return {
+              ...state,
+              markers: state.markers.filter(m => m.id !== action.markerId),
+            }
+          
+          case 'UPDATE_MARKER':
+            return {
+              ...state,
+              markers: state.markers.map(m => 
+                m.id === action.markerId ? { ...m, ...action.updates } : m
+              ),
+            }
+          
+          case 'GROUP_CLIPS': {
+            if (action.clipIds.length < 2) return state // Need at least 2 clips to group
+            const groupId = generateId()
+            return {
+              ...state,
+              clips: state.clips.map(c => 
+                action.clipIds.includes(c.id) ? { ...c, groupId } : c
+              ),
+              tracks: state.tracks.map(track => ({
+                ...track,
+                clips: track.clips.map(c => 
+                  action.clipIds.includes(c.id) ? { ...c, groupId } : c
+                ),
+              })),
+            }
+          }
+          
+          case 'UNGROUP_CLIPS': {
+            return {
+              ...state,
+              clips: state.clips.map(c => 
+                action.clipIds.includes(c.id) ? { ...c, groupId: undefined } : c
+              ),
+              tracks: state.tracks.map(track => ({
+                ...track,
+                clips: track.clips.map(c => 
+                  action.clipIds.includes(c.id) ? { ...c, groupId: undefined } : c
+                ),
+              })),
+            }
+          }
+          
           case 'SPLIT_CLIP': {
             const clip = state.clips.find(c => c.id === action.clipId)
             if (!clip) return state
@@ -758,6 +829,11 @@ interface ProjectContextType {
   addTextOverlay: (clipId: string, overlay: TextOverlay) => void
   removeTextOverlay: (clipId: string, overlayId: string) => void
   updateTextOverlay: (clipId: string, overlayId: string, updates: Partial<TextOverlay>) => void
+  addMarker: (marker: TimelineMarker) => void
+  removeMarker: (markerId: string) => void
+  updateMarker: (markerId: string, updates: Partial<TimelineMarker>) => void
+  groupClips: (clipIds: string[]) => void
+  ungroupClips: (clipIds: string[]) => void
   setCurrentTime: (time: number) => void
   setPlaying: (isPlaying: boolean) => void
   setZoom: (zoom: number) => void
@@ -1032,6 +1108,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       selectedClipId: null,
       selectedClipIds: [],
       isTextEditing: false,
+      markers: savedProject.project.markers || [],
     }
 
     dispatch({ type: 'SET_STATE', state: restoredState })
@@ -1060,6 +1137,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         masterVolume: state.masterVolume,
         masterMute: state.masterMute,
         zoom: state.zoom,
+        markers: state.markers,
       }
 
       const result = await window.electronAPI?.saveProject(pathToUse, projectData)
@@ -1157,6 +1235,14 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     saveHistory()
   }, [copiedAudioClip, state.currentTime, addAudioClip, saveHistory])
 
+  const groupClips = useCallback((clipIds: string[]) => {
+    dispatch({ type: 'GROUP_CLIPS', clipIds })
+  }, [])
+
+  const ungroupClips = useCallback((clipIds: string[]) => {
+    dispatch({ type: 'UNGROUP_CLIPS', clipIds })
+  }, [])
+
   return (
     <ProjectContext.Provider
       value={{
@@ -1194,6 +1280,17 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         updateTextOverlay: useCallback((clipId: string, overlayId: string, updates: Partial<TextOverlay>) => {
           dispatch({ type: 'UPDATE_TEXT_OVERLAY', clipId, overlayId, updates })
         }, []),
+        addMarker: useCallback((marker: TimelineMarker) => {
+          dispatch({ type: 'ADD_MARKER', marker })
+        }, []),
+        removeMarker: useCallback((markerId: string) => {
+          dispatch({ type: 'REMOVE_MARKER', markerId })
+        }, []),
+        updateMarker: useCallback((markerId: string, updates: Partial<TimelineMarker>) => {
+          dispatch({ type: 'UPDATE_MARKER', markerId, updates })
+        }, []),
+        groupClips,
+        ungroupClips,
         setCurrentTime,
         setPlaying,
         setZoom,

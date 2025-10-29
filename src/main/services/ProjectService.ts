@@ -18,6 +18,7 @@ export interface SavedProject {
     masterVolume: number
     masterMute: boolean
     zoom: number
+    markers?: any[]
   }
   // Store file paths as-is (will need to handle missing files on load)
   filePaths: {
@@ -59,6 +60,7 @@ class ProjectService {
         masterVolume: projectData.masterVolume,
         masterMute: projectData.masterMute,
         zoom: projectData.zoom,
+        markers: projectData.markers || [],
       },
       filePaths: {
         videoClips: projectData.clips.map(clip => ({

@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react'
 import { useProject } from '../context/ProjectContext'
 
 export function useKeyboardShortcuts() {
-  const { state, setCurrentTime, setPlaying, removeClip, removeAudioClip, splitClip, splitAudioClip, duplicateAudioClip, undo, redo, canUndo, canRedo, copyClip, pasteClip, copyAudioClip, pasteAudioClip } = useProject()
+  const { state, setCurrentTime, setPlaying, removeClip, removeAudioClip, splitClip, splitAudioClip, duplicateAudioClip, undo, redo, canUndo, canRedo, copyClip, pasteClip, copyAudioClip, pasteAudioClip, groupClips, ungroupClips, saveHistory } = useProject()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -138,6 +138,25 @@ export function useKeyboardShortcuts() {
         }
         return
       }
+
+      // Ctrl/Cmd + G: Group/Ungroup selected clips
+      if ((e.ctrlKey || e.metaKey) && e.code === 'KeyG' && !e.shiftKey) {
+        e.preventDefault()
+        const selectedVideoClips = state.clips.filter(clip => state.selectedClipIds.includes(clip.id))
+        if (selectedVideoClips.length >= 2) {
+          // Check if all selected clips are in the same group
+          const firstGroupId = selectedVideoClips[0]?.groupId
+          const allSameGroup = firstGroupId && selectedVideoClips.every(c => c.groupId === firstGroupId)
+          
+          if (allSameGroup) {
+            ungroupClips(state.selectedClipIds)
+          } else {
+            groupClips(state.selectedClipIds)
+          }
+          saveHistory()
+        }
+        return
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -145,6 +164,6 @@ export function useKeyboardShortcuts() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [state.isPlaying, state.currentTime, state.tracks, state.audioTracks, state.selectedClipId, state.isTextEditing, setPlaying, setCurrentTime, splitClip, splitAudioClip, removeClip, removeAudioClip, duplicateAudioClip, undo, redo, canUndo, canRedo, copyClip, pasteClip, copyAudioClip, pasteAudioClip])
+  }, [state.isPlaying, state.currentTime, state.tracks, state.audioTracks, state.selectedClipId, state.selectedClipIds, state.clips, state.isTextEditing, setPlaying, setCurrentTime, splitClip, splitAudioClip, removeClip, removeAudioClip, duplicateAudioClip, undo, redo, canUndo, canRedo, copyClip, pasteClip, copyAudioClip, pasteAudioClip, groupClips, ungroupClips, saveHistory])
 }
 

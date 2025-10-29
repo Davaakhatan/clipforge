@@ -1,8 +1,71 @@
 import React, { useRef, useEffect, useCallback, useState, MouseEvent as ReactMouseEvent } from 'react'
-import { useProject, Clip, AudioClip, TextOverlay } from '../context/ProjectContext'
+import { useProject, Clip, AudioClip, TextOverlay, TimelineMarker } from '../context/ProjectContext'
+
+interface MarkerLabelDialogProps {
+  onConfirm: (label?: string) => void
+  onCancel: () => void
+}
+
+const MarkerLabelDialog: React.FC<MarkerLabelDialogProps> = ({ onConfirm, onCancel }) => {
+  const [label, setLabel] = useState('')
+
+  const handleConfirm = () => {
+    onConfirm(label.trim() || undefined)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={onCancel}>
+      <div className="bg-gray-900 rounded p-6 w-full max-w-md mx-4 border border-gray-700/50" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h3 className="text-lg font-medium text-gray-300 mb-1">Add Marker</h3>
+            <p className="text-gray-500 text-xs">Add a label for this marker (optional)</p>
+          </div>
+          <button
+            onClick={onCancel}
+            className="text-gray-400 hover:text-gray-300 transition-colors p-1.5 hover:bg-gray-800/50 rounded"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <input
+          type="text"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          className="w-full px-2.5 py-1.5 bg-gray-900/50 border border-gray-600/50 rounded text-gray-300 text-xs mb-3 focus:outline-none focus:ring-1 focus:ring-gray-500/50"
+          placeholder="Marker label (optional)"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleConfirm()
+            } else if (e.key === 'Escape') {
+              onCancel()
+            }
+          }}
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-3 py-1.5 bg-gray-800/50 hover:bg-gray-700/50 rounded border border-gray-700/50 text-gray-300 text-xs font-medium transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            className="flex-1 px-3 py-1.5 bg-gray-700/50 hover:bg-gray-600/50 rounded border border-gray-600/50 text-gray-300 text-xs font-medium transition-colors"
+          >
+            Add Marker
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const Timeline: React.FC = () => {
-  const { state, setCurrentTime, removeClip, updateClip, saveHistory, setSelectedClipId, setZoom, removeTextOverlay, removeAudioClip, updateAudioClip, addToSelection, removeFromSelection, clearSelection, setSelectedClips } = useProject()
+  const { state, setCurrentTime, removeClip, updateClip, saveHistory, setSelectedClipId, setZoom, removeTextOverlay, removeAudioClip, updateAudioClip, addToSelection, removeFromSelection, clearSelection, setSelectedClips, addMarker, removeMarker } = useProject()
   const [selectedTextOverlay, setSelectedTextOverlay] = useState<{ clipId: string; overlayId: string } | null>(null)
   const zoom = state.zoom
   const selectedClipId = state.selectedClipId
@@ -10,10 +73,12 @@ const Timeline: React.FC = () => {
   const [isDraggingAudioClip, setIsDraggingAudioClip] = useState(false)
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false)
   const [isResizingClip, setIsResizingClip] = useState<'left' | 'right' | null>(null)
+  const [isResizingAudioClip, setIsResizingAudioClip] = useState<'left' | 'right' | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, startTime: 0 })
   const [trimFeedback, setTrimFeedback] = useState<{ side: 'left' | 'right' | null, clipId: string | null, newDuration: number }>({ side: null, clipId: null, newDuration: 0 })
   const [snappingEnabled, setSnappingEnabled] = useState(true)
   const [snapTarget, setSnapTarget] = useState<{ time: number; type: 'playhead' | 'clip-start' | 'clip-end' } | null>(null)
+  const [showMarkerDialog, setShowMarkerDialog] = useState(false)
   
   const timelineContainerRef = useRef<HTMLDivElement>(null)
   const rulerRef = useRef<HTMLDivElement>(null)
@@ -239,11 +304,39 @@ const Timeline: React.FC = () => {
   // Handle audio clip drag
   const handleAudioClipMouseDown = useCallback((e: ReactMouseEvent, clip: AudioClip) => {
     e.stopPropagation()
+    
+    // Check if clicking on trim handle or trim bar - these should NOT trigger drag
+    const target = e.target as HTMLElement
+    const isTrimBar = target.classList.contains('trim-bar') || target.closest('.trim-bar')
+    const isTrimHandleZone = target.classList.contains('trim-handle-zone') || target.closest('.trim-handle-zone')
+    
+    if (isTrimBar || isTrimHandleZone) {
+      return // Let trim handler manage it - don't drag
+    }
+    
+    // Check if clicking on delete button
+    const isDeleteButton = target.closest('button')
+    if (isDeleteButton) {
+      return // Let delete handler manage it
+    }
+    
+    // Otherwise, this is a drag operation
     setSelectedClipId(clip.id)
     setIsDraggingAudioClip(true)
     setDragOffset({
       x: e.clientX,
       startTime: clip.offset
+    })
+  }, [])
+
+  // Handle audio clip resize start
+  const handleAudioResizeStart = useCallback((e: ReactMouseEvent, side: 'left' | 'right', clip: AudioClip) => {
+    e.stopPropagation()
+    setSelectedClipId(clip.id)
+    setIsResizingAudioClip(side)
+    setDragOffset({
+      x: e.clientX,
+      startTime: side === 'left' ? clip.offset : clip.offset + clip.duration
     })
   }, [])
 
@@ -260,7 +353,7 @@ const Timeline: React.FC = () => {
 
   // Drag and resize handler
   useEffect(() => {
-    if ((!isDraggingClip && !isDraggingAudioClip && !isResizingClip) || !selectedClipId) return
+    if ((!isDraggingClip && !isDraggingAudioClip && !isResizingClip && !isResizingAudioClip) || !selectedClipId) return
 
     const handleMouseMove = (e: MouseEvent) => {
       const dx = e.clientX - dragOffset.x
@@ -278,15 +371,62 @@ const Timeline: React.FC = () => {
         return
       }
       
+      if (isResizingAudioClip) {
+        // Handle audio clip trim/resize
+        const audioClip = state.audioClips.find(c => c.id === selectedClipId)
+        if (!audioClip) return
+        
+        if (isResizingAudioClip === 'left') {
+          const newOffset = Math.max(0, dragOffset.startTime + dt)
+          const newDuration = audioClip.duration + (audioClip.offset - newOffset)
+          if (newDuration > 0 && newOffset < audioClip.offset + audioClip.duration) {
+            const trimmedAmount = audioClip.offset - newOffset
+            updateAudioClip(selectedClipId, { 
+              offset: newOffset,
+              duration: newDuration
+            })
+            setTrimFeedback({ side: 'left', clipId: selectedClipId, newDuration: trimmedAmount })
+          }
+        } else {
+          // Right trim
+          const newEndTime = dragOffset.startTime + dt
+          const newDuration = newEndTime - audioClip.offset
+          if (newDuration > 0 && newEndTime > audioClip.offset) {
+            const trimmedAmount = audioClip.duration - newDuration
+            updateAudioClip(selectedClipId, { 
+              duration: newDuration
+            })
+            setTrimFeedback({ side: 'right', clipId: selectedClipId, newDuration: trimmedAmount })
+          }
+        }
+        return
+      }
+      
       const clip = state.clips.find(c => c.id === selectedClipId)
       if (!clip) return
 
       if (isDraggingClip) {
-        // Drag the entire clip
+        // Drag the entire clip (and all clips in its group if grouped)
         const newOffset = Math.max(0, dragOffset.startTime + dt)
         const { snappedTime, target } = snapToPosition(newOffset, selectedClipId)
         setSnapTarget(target)
-        updateClip(selectedClipId, { offset: snappedTime })
+        
+        // If clip is grouped, move all clips in the group
+        if (clip.groupId) {
+          const groupedClips = state.clips.filter(c => c.groupId === clip.groupId && c.id !== clip.id)
+          const offsetDelta = snappedTime - clip.offset
+          
+          // Update main clip
+          updateClip(selectedClipId, { offset: snappedTime })
+          
+          // Update all grouped clips maintaining their relative positions
+          groupedClips.forEach(groupedClip => {
+            const newGroupedOffset = Math.max(0, groupedClip.offset + offsetDelta)
+            updateClip(groupedClip.id, { offset: newGroupedOffset })
+          })
+        } else {
+          updateClip(selectedClipId, { offset: snappedTime })
+        }
              } else if (isResizingClip) {
                // Resize (trim) the clip
                if (isResizingClip === 'left') {
@@ -320,6 +460,7 @@ const Timeline: React.FC = () => {
       setIsDraggingClip(false)
       setIsDraggingAudioClip(false)
       setIsResizingClip(null)
+      setIsResizingAudioClip(null)
       setTrimFeedback({ side: null, clipId: null, newDuration: 0 })
       setSnapTarget(null)
       
@@ -384,6 +525,20 @@ const Timeline: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-2 ml-auto">
+          {/* Add Marker Button */}
+          <button
+            onClick={() => {
+              setShowMarkerDialog(true)
+            }}
+            className="px-2 py-1 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600/50 text-gray-300 rounded text-xs transition-colors flex items-center gap-1"
+            title="Add marker at playhead"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+            Marker
+          </button>
+          
           {/* Zoom Presets */}
           <div className="flex items-center gap-1">
             <button
@@ -502,6 +657,37 @@ const Timeline: React.FC = () => {
                 </div>
               )
             })}
+            
+            {/* Timeline Markers */}
+            {state.markers.map((marker) => (
+              <div
+                key={marker.id}
+                className="absolute top-0 z-15 pointer-events-auto cursor-pointer group"
+                style={{ left: `${timeToPx(marker.time)}px` }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setCurrentTime(marker.time)
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  removeMarker(marker.id)
+                  saveHistory()
+                }}
+                title={marker.label ? `${marker.label}\nRight-click to delete` : 'Right-click to delete'}
+              >
+                {/* Marker triangle */}
+                <div className="absolute -top-0 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[4px] border-r-[4px] border-t-[8px] border-l-transparent border-r-transparent border-t-gray-500 group-hover:border-t-gray-400"></div>
+                {/* Marker line */}
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-px h-full bg-gray-500/50 group-hover:bg-gray-400/70"></div>
+                {/* Marker label (if available) */}
+                {marker.label && (
+                  <div className="absolute top-2 left-1/2 transform -translate-x-1/2 px-1 py-0.5 bg-gray-800/90 text-[9px] text-gray-300 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    {marker.label}
+                  </div>
+                )}
+              </div>
+            ))}
             
             {/* Playhead */}
             <div
@@ -632,6 +818,8 @@ const Timeline: React.FC = () => {
               {track.clips.map(clip => {
                 const isSelected = selectedClipId === clip.id
                 const isMultiSelected = state.selectedClipIds.includes(clip.id)
+                const isGrouped = clip.groupId !== undefined
+                const groupedClips = isGrouped ? state.clips.filter(c => c.groupId === clip.groupId) : []
                 return (
                   <div
                     key={clip.id}
@@ -640,6 +828,8 @@ const Timeline: React.FC = () => {
                         ? 'border-gray-300 ring-1 ring-gray-400'
                         : isMultiSelected
                         ? 'border-gray-400 ring-1 ring-gray-500'
+                        : isGrouped
+                        ? 'border-gray-500/70 border-dashed hover:border-gray-500'
                         : 'border-gray-600 hover:border-gray-500'
                     }`}
                     style={{
@@ -707,6 +897,15 @@ const Timeline: React.FC = () => {
                           <p className="text-[10px] text-gray-200 bg-gray-900/70 px-1 rounded font-medium">
                             {Math.round(clip.volume * 100)}%
                           </p>
+                        </div>
+                      )}
+                      
+                      {/* Group indicator - show on grouped clips */}
+                      {isGrouped && groupedClips.length > 1 && (
+                        <div className="absolute top-1 right-1 bg-gray-800/90 rounded-full p-0.5 border border-gray-600/50" title={`Grouped (${groupedClips.length} clips)`}>
+                          <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
                         </div>
                       )}
                     </div>
@@ -916,6 +1115,61 @@ const Timeline: React.FC = () => {
                       </button>
                     )}
 
+                    {/* Trim Handles for Audio */}
+                    {isSelected && (
+                      <>
+                        {/* Left trim handle */}
+                        <div className="trim-handle absolute left-0 top-0 bottom-0 w-6 cursor-ew-resize z-10 pointer-events-none">
+                          <div 
+                            className={`trim-bar absolute left-0 top-0 bottom-0 w-1.5 bg-white border-r-2 border-gray-500 pointer-events-auto cursor-ew-resize z-10 ${isResizingAudioClip === 'left' ? 'animate-pulse bg-gray-400 w-2' : ''}`}
+                            onMouseDown={(e) => {
+                              e.stopPropagation()
+                              handleAudioResizeStart(e, 'left', clip)
+                            }}
+                          />
+                          <div className="trim-handle-zone absolute -left-6 top-0 bottom-0 w-6 flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity pointer-events-none">
+                            <div className="w-8 h-full bg-gray-700/30 border-2 border-gray-600 rounded flex flex-col items-center justify-center">
+                              <div className="space-y-1">
+                                <div className="w-4 h-0.5 bg-gray-500" />
+                                <div className="w-4 h-0.5 bg-gray-500" />
+                                <div className="w-4 h-0.5 bg-gray-500" />
+                              </div>
+                            </div>
+                          </div>
+                          {trimFeedback.side === 'left' && trimFeedback.clipId === clip.id && (
+                            <div className="absolute -top-8 left-2 text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded border border-gray-700 whitespace-nowrap pointer-events-none">
+                              -{formatTime(trimFeedback.newDuration)}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Right trim handle */}
+                        <div className="trim-handle absolute right-0 top-0 bottom-0 w-6 cursor-ew-resize z-10 pointer-events-none">
+                          <div 
+                            className={`trim-bar absolute right-0 top-0 bottom-0 w-1.5 bg-white border-l-2 border-gray-500 pointer-events-auto cursor-ew-resize z-10 ${isResizingAudioClip === 'right' ? 'animate-pulse bg-gray-400 w-2' : ''}`}
+                            onMouseDown={(e) => {
+                              e.stopPropagation()
+                              handleAudioResizeStart(e, 'right', clip)
+                            }}
+                          />
+                          <div className="trim-handle-zone absolute -right-6 top-0 bottom-0 w-6 flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity pointer-events-none">
+                            <div className="w-8 h-full bg-gray-700/30 border-2 border-gray-600 rounded flex flex-col items-center justify-center">
+                              <div className="space-y-1">
+                                <div className="w-4 h-0.5 bg-gray-500" />
+                                <div className="w-4 h-0.5 bg-gray-500" />
+                                <div className="w-4 h-0.5 bg-gray-500" />
+                              </div>
+                            </div>
+                          </div>
+                          {trimFeedback.side === 'right' && trimFeedback.clipId === clip.id && (
+                            <div className="absolute -top-8 right-2 text-xs bg-gray-800/90 text-gray-300 px-2 py-1 rounded border border-gray-700 whitespace-nowrap pointer-events-none">
+                              -{formatTime(trimFeedback.newDuration)}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+
                     {/* Volume indicator */}
                     {clip.volume !== 1 && (
                       <div className="absolute -bottom-6 left-1">
@@ -1011,6 +1265,24 @@ const Timeline: React.FC = () => {
           <span className="ml-2 text-gray-400">• Snap ON: Drag clips near playhead/edges to auto-align</span>
         )}
       </div>
+
+      {/* Marker Label Dialog */}
+      {showMarkerDialog && (
+        <MarkerLabelDialog
+          onConfirm={(label) => {
+            addMarker({
+              id: Math.random().toString(36).substring(7),
+              time: state.currentTime,
+              label,
+            })
+            saveHistory()
+            setShowMarkerDialog(false)
+          }}
+          onCancel={() => {
+            setShowMarkerDialog(false)
+          }}
+        />
+      )}
     </div>
   )
 }

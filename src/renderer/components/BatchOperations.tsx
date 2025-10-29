@@ -8,6 +8,8 @@ interface BatchOperationsProps {
   onBatchUpdateClips: (clipIds: string[], updates: Partial<Clip>) => void
   onBatchUpdateAudioClips: (clipIds: string[], updates: Partial<AudioClip>) => void
   onClearSelection: () => void
+  onGroupClips: (clipIds: string[]) => void
+  onUngroupClips: (clipIds: string[]) => void
 }
 
 const BatchOperations: React.FC<BatchOperationsProps> = ({
@@ -16,13 +18,19 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
   audioClips,
   onBatchUpdateClips,
   onBatchUpdateAudioClips,
-  onClearSelection
+  onClearSelection,
+  onGroupClips,
+  onUngroupClips
 }) => {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const selectedClips = clips.filter(clip => selectedClipIds.includes(clip.id))
   const selectedAudioClips = audioClips.filter(clip => selectedClipIds.includes(clip.id))
   const totalSelected = selectedClipIds.length
+  
+  // Check if selected clips are already grouped
+  const hasGroup = selectedClips.length > 0 && selectedClips[0]?.groupId
+  const allSameGroup = selectedClips.length > 1 && selectedClips.every(c => c.groupId === selectedClips[0]?.groupId)
 
   const handleBatchVolumeChange = (volume: number) => {
     if (selectedClips.length > 0) {
@@ -191,11 +199,63 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
             </div>
           </div>
 
+          {/* Group/Ungroup Controls */}
+          {selectedClips.length >= 2 && (
+            <div className="bg-gray-800/30 rounded p-2 border border-gray-700/30">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span className="text-xs font-semibold text-gray-300">Grouping</span>
+                </div>
+                <span className="text-[10px] text-gray-500">⌘G</span>
+              </div>
+              <div className="mb-1.5">
+                {!allSameGroup ? (
+                  <p className="text-[10px] text-gray-500">Group clips to move them together</p>
+                ) : (
+                  <p className="text-[10px] text-gray-400">Clips are grouped - they move together</p>
+                )}
+              </div>
+              <div className="grid grid-cols-1 gap-1.5">
+                {!allSameGroup ? (
+                  <button
+                    onClick={() => onGroupClips(selectedClipIds)}
+                    className="w-full px-2 py-1.5 rounded text-xs font-medium bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600/50 text-gray-300 transition-colors flex items-center justify-center gap-1.5"
+                    title="Group selected clips to move together (Cmd/Ctrl+G)"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Group Clips
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onUngroupClips(selectedClipIds)}
+                    className="w-full px-2 py-1.5 rounded text-xs font-medium bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600/50 text-gray-300 transition-colors flex items-center justify-center gap-1.5"
+                    title="Ungroup selected clips (Cmd/Ctrl+G)"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    </svg>
+                    Ungroup Clips
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Selection Info */}
-          <div className="text-xs text-gray-500 space-y-0.5">
+          <div className="text-xs text-gray-500 space-y-0.5 pt-2 border-t border-gray-700/30">
             <div><strong>Video:</strong> {selectedClips.length} clips</div>
             <div><strong>Audio:</strong> {selectedAudioClips.length} clips</div>
-            <div><strong>Tip:</strong> Changes apply to all selected clips</div>
+            {allSameGroup && <div className="text-gray-400"><strong>Grouped:</strong> Clips move together</div>}
+            <div className="mt-1.5 text-[10px] text-gray-600">
+              <div>• Drag clips to move them</div>
+              <div>• Drag edges to trim (thin white bars)</div>
+              {selectedClips.length >= 2 && <div>• Press ⌘G to group clips</div>}
+            </div>
           </div>
         </div>
       )}

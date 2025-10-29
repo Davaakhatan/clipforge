@@ -9,7 +9,7 @@ import { AISettings } from './AISettings'
 import { AIFeatures } from './AIFeatures'
 
 const RightSidebar: React.FC = () => {
-  const { state, setPlaying, setCurrentTime, updateClip, addTextOverlay, updateTextOverlay, saveHistory, updateAudioClip, splitClip, splitAudioClip, duplicateAudioClip, normalizeAudioClip, setCrossfadeAudioClip, setAudioEffects, addVolumeKeyframe, removeVolumeKeyframe, updateVolumeKeyframe, setAudioSyncOffset, updateAudioTrack, setMasterVolume, setMasterMute, setSelectedClips, addToSelection, removeFromSelection, clearSelection, batchUpdateClips, batchUpdateAudioClips } = useProject()
+  const { state, setPlaying, setCurrentTime, updateClip, addTextOverlay, updateTextOverlay, saveHistory, updateAudioClip, splitClip, splitAudioClip, duplicateAudioClip, normalizeAudioClip, setCrossfadeAudioClip, setAudioEffects, addVolumeKeyframe, removeVolumeKeyframe, updateVolumeKeyframe, setAudioSyncOffset, updateAudioTrack, setMasterVolume, setMasterMute, setSelectedClips, addToSelection, removeFromSelection, clearSelection, batchUpdateClips, batchUpdateAudioClips, groupClips, ungroupClips } = useProject()
 
   const selectedClip = state.clips.find(c => c.id === state.selectedClipId)
   const selectedAudioClip = state.audioClips.find(c => c.id === state.selectedClipId)
@@ -75,6 +75,14 @@ const RightSidebar: React.FC = () => {
           onBatchUpdateClips={batchUpdateClips}
           onBatchUpdateAudioClips={batchUpdateAudioClips}
           onClearSelection={clearSelection}
+          onGroupClips={(clipIds) => {
+            groupClips(clipIds)
+            saveHistory()
+          }}
+          onUngroupClips={(clipIds) => {
+            ungroupClips(clipIds)
+            saveHistory()
+          }}
         />
       </div>
 
@@ -215,7 +223,7 @@ const RightSidebar: React.FC = () => {
                   ) : (
                     <>
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5rados 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 010-7.072m-2.828 9.9a9 9 0 010-12.728" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 010-7.072m-2.828 9.9a9 9 0 010-12.728" />
                       </svg>
                       <span>On</span>
                     </>
@@ -263,10 +271,10 @@ const RightSidebar: React.FC = () => {
                   </svg>
                   <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Video Effects</label>
                 </div>
-                {(selectedClip.brightness !== 0 || selectedClip.contrast !== 0 || selectedClip.saturation !== 0) && (
+                {(selectedClip.brightness !== 0 || selectedClip.contrast !== 0 || selectedClip.saturation !== 0 || (selectedClip.blur !== undefined && selectedClip.blur !== 0) || (selectedClip.sharpen !== undefined && selectedClip.sharpen !== 0) || (selectedClip.grayscale !== undefined && selectedClip.grayscale !== 0) || (selectedClip.sepia !== undefined && selectedClip.sepia !== 0) || selectedClip.vintage) && (
                   <button
                     onClick={() => {
-                      updateClip(selectedClip.id, { brightness: 0, contrast: 0, saturation: 0 })
+                      updateClip(selectedClip.id, { brightness: 0, contrast: 0, saturation: 0, blur: 0, sharpen: 0, grayscale: 0, sepia: 0, vintage: false })
                       saveHistory()
                     }}
                     className="px-2 py-1 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600/50 text-xs text-gray-300 rounded transition-colors flex items-center gap-1"
@@ -294,8 +302,9 @@ const RightSidebar: React.FC = () => {
                     value={selectedClip.brightness || 0}
                     onChange={(e) => {
                       updateClip(selectedClip.id, { brightness: parseInt(e.target.value) })
-                      saveHistory()
                     }}
+                    onMouseUp={() => saveHistory()}
+                    onTouchEnd={() => saveHistory()}
                     className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                     style={{
                       background: `linear-gradient(to right, #4b5563 0%, #4b5563 ${(selectedClip.brightness || 0) + 100}%, #1f2937 ${(selectedClip.brightness || 0) + 100}%, #1f2937 100%)`
@@ -316,8 +325,9 @@ const RightSidebar: React.FC = () => {
                     value={selectedClip.contrast || 0}
                     onChange={(e) => {
                       updateClip(selectedClip.id, { contrast: parseInt(e.target.value) })
-                      saveHistory()
                     }}
+                    onMouseUp={() => saveHistory()}
+                    onTouchEnd={() => saveHistory()}
                     className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                     style={{
                       background: `linear-gradient(to right, #4b5563 0%, #4b5563 ${(selectedClip.contrast || 0) + 100}%, #1f2937 ${(selectedClip.contrast || 0) + 100}%, #1f2937 100%)`
@@ -338,13 +348,126 @@ const RightSidebar: React.FC = () => {
                     value={selectedClip.saturation || 0}
                     onChange={(e) => {
                       updateClip(selectedClip.id, { saturation: parseInt(e.target.value) })
-                      saveHistory()
                     }}
+                    onMouseUp={() => saveHistory()}
+                    onTouchEnd={() => saveHistory()}
                     className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                     style={{
                       background: `linear-gradient(to right, #4b5563 0%, #4b5563 ${(selectedClip.saturation || 0) + 100}%, #1f2937 ${(selectedClip.saturation || 0) + 100}%, #1f2937 100%)`
                     }}
                   />
+                </div>
+
+                {/* Blur */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs text-gray-400">Blur</span>
+                    <span className="text-xs text-gray-500 font-mono">{selectedClip.blur || 0}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={selectedClip.blur || 0}
+                    onChange={(e) => {
+                      updateClip(selectedClip.id, { blur: parseInt(e.target.value) })
+                    }}
+                    onMouseUp={() => saveHistory()}
+                    onTouchEnd={() => saveHistory()}
+                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #4b5563 0%, #4b5563 ${(selectedClip.blur || 0)}%, #1f2937 ${(selectedClip.blur || 0)}%, #1f2937 100%)`
+                    }}
+                  />
+                </div>
+
+                {/* Sharpen */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs text-gray-400">Sharpen</span>
+                    <span className="text-xs text-gray-500 font-mono">{selectedClip.sharpen || 0}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={selectedClip.sharpen || 0}
+                    onChange={(e) => {
+                      updateClip(selectedClip.id, { sharpen: parseInt(e.target.value) })
+                    }}
+                    onMouseUp={() => saveHistory()}
+                    onTouchEnd={() => saveHistory()}
+                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #4b5563 0%, #4b5563 ${(selectedClip.sharpen || 0)}%, #1f2937 ${(selectedClip.sharpen || 0)}%, #1f2937 100%)`
+                    }}
+                  />
+                </div>
+
+                {/* Grayscale */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs text-gray-400">Grayscale</span>
+                    <span className="text-xs text-gray-500 font-mono">{selectedClip.grayscale || 0}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={selectedClip.grayscale || 0}
+                    onChange={(e) => {
+                      updateClip(selectedClip.id, { grayscale: parseInt(e.target.value) })
+                    }}
+                    onMouseUp={() => saveHistory()}
+                    onTouchEnd={() => saveHistory()}
+                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #4b5563 0%, #4b5563 ${(selectedClip.grayscale || 0)}%, #1f2937 ${(selectedClip.grayscale || 0)}%, #1f2937 100%)`
+                    }}
+                  />
+                </div>
+
+                {/* Sepia */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs text-gray-400">Sepia</span>
+                    <span className="text-xs text-gray-500 font-mono">{selectedClip.sepia || 0}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={selectedClip.sepia || 0}
+                    onChange={(e) => {
+                      updateClip(selectedClip.id, { sepia: parseInt(e.target.value) })
+                    }}
+                    onMouseUp={() => saveHistory()}
+                    onTouchEnd={() => saveHistory()}
+                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #4b5563 0%, #4b5563 ${(selectedClip.sepia || 0)}%, #1f2937 ${(selectedClip.sepia || 0)}%, #1f2937 100%)`
+                    }}
+                  />
+                </div>
+
+                {/* Vintage Toggle */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs text-gray-400">Vintage</span>
+                    <button
+                      onClick={() => {
+                        updateClip(selectedClip.id, { vintage: !selectedClip.vintage })
+                        saveHistory()
+                      }}
+                      className={`px-2 py-1 rounded border text-xs font-medium transition-colors ${
+                        selectedClip.vintage
+                          ? 'bg-gray-700/50 border-gray-600/50 text-gray-300'
+                          : 'bg-gray-700/50 border-gray-600/50 hover:bg-gray-600/50 text-gray-300'
+                      }`}
+                    >
+                      {selectedClip.vintage ? 'On' : 'Off'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
