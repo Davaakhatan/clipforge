@@ -271,3 +271,11 @@ ipcMain.handle('suggestExportSettings', async (event, videoInfo: any) => {
 ipcMain.handle('generateMusicSuggestions', async (event, description: string, duration: number) => {
   return await aiService.generateMusicSuggestions(description, duration)
 })
+
+ipcMain.handle('enhanceAudioCleanup', async (event, audioOrVideoFilePath: string, options: any) => {
+  return await aiService.enhanceAudioCleanup(audioOrVideoFilePath, options)
+})
+
+ipcMain.handle('automateWorkflow', async (event, videoFilePath: string, tasks: string[]) => {
+  return await aiService.automateWorkflow(videoFilePath, tasks)
+})

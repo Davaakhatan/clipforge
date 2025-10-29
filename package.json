@@ -28,7 +28,7 @@
       "category": "public.app-category.video",
       "target": [
         {
-          "target": "default",
+          "target": "dmg",
           "arch": [
             "x64",
             "arm64"
@@ -36,6 +36,26 @@
         }
       ],
       "hardenedRuntime": true
+    },
+    "dmg": {
+      "title": "${productName} ${version}",
+      "background": null,
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
     },
     "files": [
       "dist-electron/**/*",

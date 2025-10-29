@@ -13,6 +13,8 @@ interface ElectronAPI {
   suggestColorCorrection: (videoFilePath: string) => Promise<any>
   suggestExportSettings: (videoInfo: any) => Promise<any>
   generateMusicSuggestions: (description: string, duration: number) => Promise<string[]>
+  enhanceAudioCleanup: (audioOrVideoFilePath: string, options: any) => Promise<{ success: boolean; outputPath?: string; error?: string }>
+  automateWorkflow: (videoFilePath: string, tasks: string[]) => Promise<{ success: boolean; results?: any[]; error?: string }>
 }
 
 declare global {

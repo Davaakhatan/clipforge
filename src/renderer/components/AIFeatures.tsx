@@ -20,10 +20,20 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
         throw new Error('AI API not available')
       }
 
-      const captions = await window.electronAPI.generateCaptions('/path/to/audio.mp3')
-      setResult(`Generated captions:\n${captions.join('\n')}`)
+      // Open file picker for video/audio
+      const filePaths = await window.electronAPI.ipc.invoke('showOpenDialog')
+      if (!filePaths || filePaths.length === 0) {
+        setResult('❌ No file selected. Please select a video or audio file.')
+        setIsLoading(false)
+        setActiveFeature('')
+        return
+      }
+
+      const captions = await window.electronAPI.generateCaptions(filePaths[0])
+      const formattedResult = `🎤 AUTO-GENERATED CAPTIONS\n\n${captions.join('\n\n')}\n\n💡 These captions were generated using OpenAI's Whisper API and include timestamps for easy editing.`
+      setResult(formattedResult)
     } catch (error: any) {
-      setResult(`Error: ${error.message}`)
+      setResult(`❌ Error generating captions: ${error.message}\n\nThis might be because:\n• No audio file was selected\n• Audio file format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`)
     } finally {
       setIsLoading(false)
       setActiveFeature('')
@@ -41,9 +51,12 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
       }
 
       const analysis = await window.electronAPI.analyzeVideoContent('/path/to/video.mp4')
-      setResult(`Content analysis:\n${JSON.stringify(analysis, null, 2)}`)
+      const formattedResult = `🔍 SMART CONTENT ANALYSIS\n\n${analysis.map((item: any, index: number) => 
+        `${index + 1}. [${item.timestamp}] ${item.type.toUpperCase()}\n   Description: ${item.description}\n   Confidence: ${Math.round((item.confidence || 0.8) * 100)}%\n   ${item.suggestions ? `Suggestions: ${item.suggestions}` : ''}`
+      ).join('\n\n')}\n\n💡 This analysis was generated using GPT-4 Vision to identify key moments, scene changes, and editing opportunities.`
+      setResult(formattedResult)
     } catch (error: any) {
-      setResult(`Error: ${error.message}`)
+      setResult(`❌ Error analyzing content: ${error.message}\n\nThis might be because:\n• No video file was selected\n• Video format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`)
     } finally {
       setIsLoading(false)
       setActiveFeature('')
@@ -61,9 +74,12 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
       }
 
       const overlays = await window.electronAPI.generateTextOverlays('A tutorial about video editing', 60)
-      setResult(`Generated text overlays:\n${JSON.stringify(overlays, null, 2)}`)
+      const formattedResult = `📝 INTELLIGENT TEXT OVERLAYS\n\n${overlays.map((overlay: any, index: number) => 
+        `${index + 1}. "${overlay.text}"\n   Style: ${overlay.style} | Position: ${overlay.position}\n   Duration: ${overlay.startTime}ms - ${overlay.endTime}ms\n   Animation: ${overlay.animation} | Color: ${overlay.color}\n   Font Size: ${overlay.fontSize} | Opacity: ${overlay.opacity}`
+      ).join('\n\n')}\n\n💡 These overlays were generated using GPT-4 with contextual timing and styling for maximum visual impact.`
+      setResult(formattedResult)
     } catch (error: any) {
-      setResult(`Error: ${error.message}`)
+      setResult(`❌ Error generating text overlays: ${error.message}\n\nThis might be because:\n• Invalid video description\n• OpenAI API quota exceeded\n• Network connection issues`)
     } finally {
       setIsLoading(false)
       setActiveFeature('')
@@ -80,10 +96,20 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
         throw new Error('AI API not available')
       }
 
-      const suggestions = await window.electronAPI.suggestColorCorrection('/path/to/video.mp4')
-      setResult(`Color correction suggestions:\n${JSON.stringify(suggestions, null, 2)}`)
+      // Open file picker for video
+      const filePaths = await window.electronAPI.ipc.invoke('showOpenDialog')
+      if (!filePaths || filePaths.length === 0) {
+        setResult('❌ No file selected. Please select a video file.')
+        setIsLoading(false)
+        setActiveFeature('')
+        return
+      }
+
+      const suggestions = await window.electronAPI.suggestColorCorrection(filePaths[0])
+      const formattedResult = `🎨 AI COLOR CORRECTION SUGGESTIONS\n\nRecommended Adjustments:\n• Brightness: ${suggestions.brightness > 0 ? '+' : ''}${suggestions.brightness}\n• Contrast: ${suggestions.contrast > 0 ? '+' : ''}${suggestions.contrast}\n• Saturation: ${suggestions.saturation > 0 ? '+' : ''}${suggestions.saturation}\n• Temperature: ${suggestions.temperature > 0 ? '+' : ''}${suggestions.temperature}\n• Exposure: ${suggestions.exposure > 0 ? '+' : ''}${suggestions.exposure}\n• Shadows: ${suggestions.shadows > 0 ? '+' : ''}${suggestions.shadows}\n• Highlights: ${suggestions.highlights > 0 ? '+' : ''}${suggestions.highlights}\n\nReason: ${suggestions.reason}\nConfidence: ${Math.round((suggestions.confidence || 0.7) * 100)}%\nPreset: ${suggestions.preset}\n\n💡 These suggestions were generated using GPT-4 Vision analysis of your video frames for optimal color enhancement.`
+      setResult(formattedResult)
     } catch (error: any) {
-      setResult(`Error: ${error.message}`)
+      setResult(`❌ Error suggesting color correction: ${error.message}\n\nThis might be because:\n• No video file was selected\n• Video format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`)
     } finally {
       setIsLoading(false)
       setActiveFeature('')
@@ -101,9 +127,10 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
       }
 
       const suggestions = await window.electronAPI.suggestExportSettings({ duration: 60, resolution: '1080p' })
-      setResult(`Export settings suggestions:\n${JSON.stringify(suggestions, null, 2)}`)
+      const formattedResult = `⚙️ OPTIMAL EXPORT SETTINGS\n\nRecommended Configuration:\n• Resolution: ${suggestions.resolution}\n• Format: ${suggestions.format.toUpperCase()}\n• Video Codec: ${suggestions.codec.toUpperCase()}\n• Bitrate: ${suggestions.bitrate}\n• Quality: ${suggestions.quality.toUpperCase()}\n• Audio Codec: ${suggestions.audioCodec.toUpperCase()}\n• Audio Bitrate: ${suggestions.audioBitrate}\n• Frame Rate: ${suggestions.frameRate} fps\n• Preset: ${suggestions.preset}\n\nReason: ${suggestions.reason}\nEstimated File Size: ${suggestions.estimatedSize}\nCompatibility: ${suggestions.compatibility}\n\n💡 These settings were optimized using GPT-4 analysis for the best balance of quality, file size, and compatibility.`
+      setResult(formattedResult)
     } catch (error: any) {
-      setResult(`Error: ${error.message}`)
+      setResult(`❌ Error suggesting export settings: ${error.message}\n\nThis might be because:\n• Invalid video information\n• OpenAI API quota exceeded\n• Network connection issues`)
     } finally {
       setIsLoading(false)
       setActiveFeature('')
@@ -121,9 +148,10 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
       }
 
       const suggestions = await window.electronAPI.generateMusicSuggestions('Upbeat tutorial video', 60)
-      setResult(`Music suggestions:\n${suggestions.join('\n')}`)
+      const formattedResult = `🎵 INTELLIGENT MUSIC SUGGESTIONS\n\n${suggestions.join('\n\n')}\n\n💡 These suggestions were generated using GPT-4 analysis considering your video content, mood, duration, and current music trends. Each suggestion includes genre, mood, duration, and where to find the track.`
+      setResult(formattedResult)
     } catch (error: any) {
-      setResult(`Error: ${error.message}`)
+      setResult(`❌ Error generating music suggestions: ${error.message}\n\nThis might be because:\n• Invalid video description\n• OpenAI API quota exceeded\n• Network connection issues`)
     } finally {
       setIsLoading(false)
       setActiveFeature('')
@@ -351,6 +379,136 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <span>Find Music</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Audio Cleanup */}
+          <div className="bg-gradient-to-br from-teal-600/20 to-teal-800/20 border border-teal-500/30 rounded-xl p-6 hover:border-teal-400/50 transition-all group">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-teal-600 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold text-lg">Audio Cleanup</h3>
+                <p className="text-gray-400 text-sm">AI-powered audio enhancement</p>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                setIsLoading(true)
+                setResult('')
+                setActiveFeature('audio-cleanup')
+                try {
+                  if (!window.electronAPI) throw new Error('AI API not available')
+                  const filePaths = await window.electronAPI.ipc.invoke('showOpenDialog')
+                  if (!filePaths || filePaths.length === 0) {
+                    setResult('❌ No file selected.')
+                    setIsLoading(false)
+                    setActiveFeature('')
+                    return
+                  }
+                  const result = await window.electronAPI.enhanceAudioCleanup(filePaths[0], {
+                    noiseReduction: true,
+                    normalize: true,
+                    volumeBoost: 5
+                  })
+                  if (result.success) {
+                    setResult(`✅ Audio Enhanced Successfully!\n\nOutput saved to:\n${result.outputPath}\n\nApplied enhancements:\n• Noise reduction\n• Normalization\n• Volume boost (+5dB)`)
+                  } else {
+                    setResult(`❌ Error: ${result.error}`)
+                  }
+                } catch (error: any) {
+                  setResult(`❌ Error: ${error.message}`)
+                } finally {
+                  setIsLoading(false)
+                  setActiveFeature('')
+                }
+              }}
+              disabled={isLoading}
+              className="w-full bg-teal-600 hover:bg-teal-700 disabled:bg-teal-600/50 text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+            >
+              {isLoading && activeFeature === 'audio-cleanup' ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Enhancing...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>Clean Audio</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Workflow Automation */}
+          <div className="bg-gradient-to-br from-cyan-600/20 to-cyan-800/20 border border-cyan-500/30 rounded-xl p-6 hover:border-cyan-400/50 transition-all group">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-cyan-600 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold text-lg">Workflow Automation</h3>
+                <p className="text-gray-400 text-sm">Automate video editing workflow</p>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                setIsLoading(true)
+                setResult('')
+                setActiveFeature('workflow')
+                try {
+                  if (!window.electronAPI) throw new Error('AI API not available')
+                  const filePaths = await window.electronAPI.ipc.invoke('showOpenDialog')
+                  if (!filePaths || filePaths.length === 0) {
+                    setResult('❌ No file selected.')
+                    setIsLoading(false)
+                    setActiveFeature('')
+                    return
+                  }
+                  const result = await window.electronAPI.automateWorkflow(filePaths[0], [
+                    'add captions',
+                    'color correct',
+                    'add overlays',
+                    'enhance audio'
+                  ])
+                  if (result.success && result.results) {
+                    const formatted = `🚀 AI WORKFLOW AUTOMATION\n\nSuggested Workflow Steps:\n\n${result.results.map((step: any, i: number) => 
+                      `${i + 1}. ${step.action.toUpperCase()} (Priority: ${step.priority})\n   ${step.description}\n   Estimated time: ${step.estimatedTime}s${step.startTime ? `\n   Time range: ${step.startTime}s - ${step.endTime}s` : ''}`
+                    ).join('\n\n')}`
+                    setResult(formatted)
+                  } else {
+                    setResult(`❌ Error: ${result.error || 'Unknown error'}`)
+                  }
+                } catch (error: any) {
+                  setResult(`❌ Error: ${error.message}`)
+                } finally {
+                  setIsLoading(false)
+                  setActiveFeature('')
+                }
+              }}
+              disabled={isLoading}
+              className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-600/50 text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+            >
+              {isLoading && activeFeature === 'workflow' ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Planning...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>Automate</span>
                 </>
               )}
             </button>

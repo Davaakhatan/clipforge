@@ -126,6 +126,134 @@ class FFmpegService {
   }
 
   /**
+   * Extract frames from video at specific timestamps and return as base64
+   */
+  extractFrames(
+    videoPath: string,
+    timestamps: number[],
+    outputDir?: string
+  ): Promise<Array<{ timestamp: number; base64: string }>> {
+    return new Promise((resolve, reject) => {
+      const tempDir = outputDir || path.join(path.dirname(videoPath), 'temp_frames')
+      fs.mkdirSync(tempDir, { recursive: true })
+
+      const framePromises = timestamps.map((ts) => {
+        return new Promise<{ timestamp: number; base64: string }>((resolveFrame, rejectFrame) => {
+          const outputPath = path.join(tempDir, `frame_${ts}.jpg`)
+
+          ffmpeg(videoPath)
+            .seekInput(ts)
+            .frames(1)
+            .output(outputPath)
+            .on('end', () => {
+              try {
+                const imageBuffer = fs.readFileSync(outputPath)
+                const base64 = imageBuffer.toString('base64')
+                // Clean up temp file
+                fs.unlinkSync(outputPath)
+                resolveFrame({ timestamp: ts, base64 })
+              } catch (error) {
+                rejectFrame(error)
+              }
+            })
+            .on('error', (err) => rejectFrame(err))
+            .run()
+        })
+      })
+
+      Promise.all(framePromises)
+        .then((frames) => {
+          // Clean up temp directory if we created it
+          if (!outputDir && fs.existsSync(tempDir)) {
+            try {
+              fs.rmSync(tempDir, { recursive: true, force: true })
+            } catch {}
+          }
+          resolve(frames)
+        })
+        .catch((error) => {
+          // Clean up on error
+          if (!outputDir && fs.existsSync(tempDir)) {
+            try {
+              fs.rmSync(tempDir, { recursive: true, force: true })
+            } catch {}
+          }
+          reject(error)
+        })
+    })
+  }
+
+  /**
+   * Extract audio track from video file
+   */
+  extractAudio(videoPath: string, outputPath: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      ffmpeg(videoPath)
+        .noVideo()
+        .audioCodec('libmp3lame')
+        .output(outputPath)
+        .on('end', () => resolve(outputPath))
+        .on('error', (err) => reject(err))
+        .run()
+    })
+  }
+
+  /**
+   * Apply audio cleanup/enhancement filters
+   */
+  enhanceAudio(
+    inputPath: string,
+    outputPath: string,
+    options: {
+      noiseReduction?: boolean
+      normalize?: boolean
+      bassBoost?: number // 0-100
+      trebleBoost?: number // 0-100
+      volumeBoost?: number // -100 to 100 dB
+    } = {}
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      let command = ffmpeg(inputPath)
+
+      // Noise reduction
+      if (options.noiseReduction) {
+        command = command.audioFilters('highpass=f=200,lowpass=f=3000')
+      }
+
+      // Normalize audio
+      if (options.normalize) {
+        command = command.audioFilters('loudnorm=I=-16:TP=-1.5:LRA=11')
+      }
+
+      // Volume boost
+      if (options.volumeBoost) {
+        const volume = Math.max(-100, Math.min(100, options.volumeBoost))
+        command = command.audioFilters(`volume=${volume}dB`)
+      }
+
+      // Bass boost
+      if (options.bassBoost && options.bassBoost > 0) {
+        const gain = options.bassBoost / 100
+        command = command.audioFilters(`bass=g=${gain}`)
+      }
+
+      // Treble boost
+      if (options.trebleBoost && options.trebleBoost > 0) {
+        const gain = options.trebleBoost / 100
+        command = command.audioFilters(`treble=g=${gain}`)
+      }
+
+      command
+        .audioCodec('aac')
+        .audioBitrate('192k')
+        .output(outputPath)
+        .on('end', () => resolve(outputPath))
+        .on('error', (err) => reject(err))
+        .run()
+    })
+  }
+
+  /**
    * Export timeline to MP4 - trims clips and concatenates them
    */
   async exportProject(

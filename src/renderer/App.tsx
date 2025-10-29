@@ -22,8 +22,8 @@ function AppContent() {
           </div>
         </div>
 
-        {/* Center - Preview (reduced size) */}
-        <div className="flex-1 flex flex-col overflow-hidden max-w-4xl">
+        {/* Center - Preview */}
+        <div className="flex-1 flex flex-col overflow-hidden">
           <Preview />
         </div>
 

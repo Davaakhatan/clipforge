@@ -20,6 +20,8 @@ try {
     suggestColorCorrection: (videoFilePath: string) => Promise<any>
     suggestExportSettings: (videoInfo: any) => Promise<any>
     generateMusicSuggestions: (description: string, duration: number) => Promise<string[]>
+    enhanceAudioCleanup: (audioOrVideoFilePath: string, options: any) => Promise<{ success: boolean; outputPath?: string; error?: string }>
+    automateWorkflow: (videoFilePath: string, tasks: string[]) => Promise<{ success: boolean; results?: any[]; error?: string }>
   }
 
   const electronAPI: ElectronAPI = {
@@ -40,6 +42,8 @@ try {
     suggestColorCorrection: (videoFilePath: string) => ipcRenderer.invoke('suggestColorCorrection', videoFilePath),
     suggestExportSettings: (videoInfo: any) => ipcRenderer.invoke('suggestExportSettings', videoInfo),
     generateMusicSuggestions: (description: string, duration: number) => ipcRenderer.invoke('generateMusicSuggestions', description, duration),
+    enhanceAudioCleanup: (audioOrVideoFilePath: string, options: any) => ipcRenderer.invoke('enhanceAudioCleanup', audioOrVideoFilePath, options),
+    automateWorkflow: (videoFilePath: string, tasks: string[]) => ipcRenderer.invoke('automateWorkflow', videoFilePath, tasks),
   }
 
   console.log('Preload: Exposing electronAPI with methods:', Object.keys(electronAPI))
