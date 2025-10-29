@@ -282,8 +282,14 @@ src/
 - [x] Timeline snapping - Magnetic snapping to playhead and clip edges with visual feedback
 - [x] Copy/paste clips - Ctrl/Cmd+C to copy, Ctrl/Cmd+V to paste at playhead
 
+### ✅ Phase 3 Features (Complete)
+- [x] Video rotation (0°, 90°, 180°, 270°) - Rotate clips with UI controls in RightSidebar
+- [x] Horizontal flip - Mirror clips horizontally
+- [x] Vertical flip - Flip clips vertically
+- [x] Real-time preview - See rotation/flip instantly in video preview
+- [x] Export support - Rotation/flip applied during video export
+
 ### ⏳ Future Enhancements
-- [ ] Video rotation and flip (90°, 180°, 270°, horizontal/vertical flip)
 - [ ] Additional video filters (blur, sharpen, sepia, grayscale, vintage)
 - [ ] Timeline markers/bookmarks - Add markers for important points
 - [ ] Sequence/clip grouping - Group multiple clips to move together

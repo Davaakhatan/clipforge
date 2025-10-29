@@ -552,13 +552,13 @@ const VideoPreview: React.FC = () => {
             
             {/* Fade overlay indicator */}
             {currentClip.fadeIn && currentClip.fadeIn > 0 && (
-              <div className="absolute top-2 left-2 bg-purple-500 bg-opacity-80 text-white text-xs px-2 py-1 rounded font-semibold">
+              <div className="absolute top-2 left-2 bg-gray-800/80 text-gray-300 text-xs px-2 py-1 rounded border border-gray-600/50 font-medium">
                 Fade In: {Math.round((currentClip.fadeIn || 0) * 100)}%
               </div>
             )}
             
             {currentClip.fadeOut && currentClip.fadeOut > 0 && (
-              <div className="absolute top-2 right-2 bg-purple-500 bg-opacity-80 text-white text-xs px-2 py-1 rounded font-semibold">
+              <div className="absolute top-2 right-2 bg-gray-800/80 text-gray-300 text-xs px-2 py-1 rounded border border-gray-600/50 font-medium">
                 Fade Out: {Math.round((currentClip.fadeOut || 0) * 100)}%
               </div>
             )}
@@ -574,7 +574,7 @@ const VideoPreview: React.FC = () => {
               return (
                 <div
                   key={overlay.id}
-                  className={`absolute ${isDraggingText === overlay.id ? 'cursor-grabbing' : 'cursor-move'} hover:outline hover:outline-2 hover:outline-blue-500 z-50 group`}
+                  className={`absolute ${isDraggingText === overlay.id ? 'cursor-grabbing' : 'cursor-move'} hover:outline hover:outline-1 hover:outline-gray-400 z-50 group`}
                   style={{
                     left: `${overlay.position.x}%`,
                     top: `${overlay.position.y}%`,
@@ -636,7 +636,7 @@ const VideoPreview: React.FC = () => {
                           // For Delete and Backspace, just stop propagation - let the input handle it normally
                         }}
                         autoFocus
-                        className="bg-black bg-opacity-80 text-white px-2 py-1 rounded border border-blue-500"
+                        className="bg-gray-900/90 text-gray-300 px-2 py-1 rounded border border-gray-600/50"
                         style={{
                           fontSize: `${overlay.fontSize}px`,
                           fontFamily: overlay.fontFamily,
@@ -657,7 +657,7 @@ const VideoPreview: React.FC = () => {
               onClick={handleSeek}
             >
               <div 
-                className="h-full bg-accent transition-all"
+                className="h-full bg-gray-600 transition-all"
                 style={{ width: `${((state.currentTime) / (currentClip.duration)) * 100}%` }}
               />
             </div>
@@ -665,7 +665,7 @@ const VideoPreview: React.FC = () => {
             {/* Play overlay button */}
             {!state.isPlaying && (
               <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 cursor-pointer z-30" onClick={handlePlayPause}>
-                <button className="w-20 h-20 bg-accent hover:bg-accent-hover rounded-full flex items-center justify-center transition-all shadow-2xl">
+                <button className="w-16 h-16 bg-gray-800/80 hover:bg-gray-700/80 rounded-full flex items-center justify-center transition-all border border-gray-600/50">
                   <svg className="w-10 h-10 ml-1" fill="white" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
                   </svg>
@@ -675,7 +675,9 @@ const VideoPreview: React.FC = () => {
           </>
         ) : (
           <div className="text-gray-500 text-center">
-            <div className="text-6xl mb-4">🎬</div>
+            <svg className="w-12 h-12 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
             <p className="text-sm font-medium">Import a video to see preview</p>
             <p className="text-xs text-gray-600 mt-2">Drag & drop or click "Import Video"</p>
           </div>
@@ -683,10 +685,12 @@ const VideoPreview: React.FC = () => {
 
         {/* Drop overlay */}
         {isDraggingOver && (
-          <div className="absolute inset-0 bg-accent bg-opacity-20 border-4 border-dashed border-accent flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-gray-800/20 border-2 border-dashed border-gray-600/50 flex items-center justify-center z-50">
             <div className="text-center">
-              <div className="text-4xl mb-2">📦</div>
-              <p className="text-lg font-semibold text-accent">Drop to preview</p>
+              <svg className="w-10 h-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <p className="text-sm font-medium text-gray-300">Drop to preview</p>
             </div>
           </div>
         )}
@@ -694,45 +698,187 @@ const VideoPreview: React.FC = () => {
 
       {/* Controls bar */}
       {currentClip && (
-        <div className="mt-6 w-full flex items-center gap-4 px-2">
-          <button
-            onClick={handlePlayPause}
-            className="w-14 h-14 bg-accent hover:bg-accent-hover rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl"
-            title={state.isPlaying ? 'Pause' : 'Play'}
-          >
-            {state.isPlaying ? (
-              <svg className="w-7 h-7" fill="white" viewBox="0 0 24 24">
-                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-              </svg>
-            ) : (
-              <svg className="w-7 h-7 ml-1" fill="white" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            )}
-          </button>
+        <div className="mt-6 w-full">
+          {/* Progress bar and time */}
+          <div className="w-full flex items-center gap-4 px-2 mb-3">
+            <div className="flex-1 h-2.5 bg-gray-800 rounded-full cursor-pointer relative group" onClick={handleSeek}>
+              <div 
+                className="h-full bg-gray-600 rounded-full transition-all relative"
+                style={{ width: `${((state.currentTime) / (currentClip.duration)) * 100}%` }}
+              >
+                <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-4 h-4 bg-gray-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity border border-gray-500" />
+              </div>
+            </div>
 
-          <div className="flex-1 h-2.5 bg-gray-800 rounded-full cursor-pointer relative group" onClick={handleSeek}>
-            <div 
-              className="h-full bg-accent rounded-full transition-all relative"
-              style={{ width: `${((state.currentTime) / (currentClip.duration)) * 100}%` }}
-            >
-              <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-4 h-4 bg-accent rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" />
+            <div className="text-xs text-gray-300 font-mono min-w-[100px] text-right">
+              {formatTime(state.currentTime)} / {formatTime(currentClip.duration)}
             </div>
           </div>
 
-          <div className="text-sm text-gray-300 font-mono min-w-[140px]">
-            {formatTime(state.currentTime)} / {formatTime(currentClip.duration)}
-          </div>
+          {/* Playback controls */}
+          <div className="w-full flex items-center justify-center gap-1 px-2">
+            {/* First Group - Standard Playback Controls */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  const newTime = currentClip.offset
+                  setCurrentTime(newTime)
+                  setPlaying(false)
+                }}
+                className="px-2 py-1 bg-gray-800/50 hover:bg-gray-700/50 rounded border border-gray-700/50 text-gray-300 transition-colors flex items-center gap-1"
+                title="Rewind to Start"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+                <svg className="w-3 h-3 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h2m0 0h2m-2 0V5z" />
+                </svg>
+              </button>
 
-          <button
-            onClick={handleStop}
-            className="w-12 h-12 hover:bg-gray-800 rounded-full flex items-center justify-center transition-colors"
-            title="Stop"
-          >
-            <svg className="w-6 h-6" fill="gray" viewBox="0 0 24 24">
-              <path d="M6 6h12v12H6z" />
-            </svg>
-          </button>
+              <button
+                onClick={() => {
+                  const newTime = Math.max(currentClip.offset, state.currentTime - 100)
+                  setCurrentTime(newTime)
+                  setPlaying(false)
+                }}
+                className="px-2 py-1 bg-gray-800/50 hover:bg-gray-700/50 rounded border border-gray-700/50 text-gray-300 transition-colors flex items-center"
+                title="Step Backward"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+              </button>
+
+              <button
+                onClick={() => {
+                  const newTime = Math.min(currentClip.offset + currentClip.duration, state.currentTime + 100)
+                  setCurrentTime(newTime)
+                  setPlaying(false)
+                }}
+                className="px-2 py-1 bg-gray-800/50 hover:bg-gray-700/50 rounded border border-gray-700/50 text-gray-300 transition-colors flex items-center"
+                title="Step Forward"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              <button
+                onClick={() => {
+                  const newTime = currentClip.offset + currentClip.duration
+                  setCurrentTime(newTime)
+                  setPlaying(false)
+                }}
+                className="px-2 py-1 bg-gray-800/50 hover:bg-gray-700/50 rounded border border-gray-700/50 text-gray-300 transition-colors flex items-center gap-1"
+                title="Fast Forward to End"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h2m0 0h2m-2 0V5z" />
+                </svg>
+                <svg className="w-3 h-3 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Separator */}
+            <div className="w-px h-4 bg-gray-700/50 mx-1" />
+
+            {/* Second Group - Time-Based Jump Controls */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  const newTime = Math.max(currentClip.offset, state.currentTime - 1000)
+                  setCurrentTime(newTime)
+                  setPlaying(false)
+                }}
+                className="px-2 py-1 bg-gray-800/50 hover:bg-gray-700/50 rounded border border-gray-700/50 text-gray-300 transition-colors flex items-center gap-1 text-xs"
+                title="Jump Backward 1 Second"
+              >
+                <span className="text-xs font-medium">1s</span>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+              </button>
+
+              <button
+                onClick={() => {
+                  const newTime = Math.min(currentClip.offset + currentClip.duration, state.currentTime + 1000)
+                  setCurrentTime(newTime)
+                  setPlaying(false)
+                }}
+                className="px-2 py-1 bg-gray-800/50 hover:bg-gray-700/50 rounded border border-gray-700/50 text-gray-300 transition-colors flex items-center gap-1 text-xs"
+                title="Jump Forward 1 Second"
+              >
+                <span className="text-xs font-medium">1s</span>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              <button
+                onClick={() => {
+                  const newTime = Math.max(currentClip.offset, state.currentTime - 5000)
+                  setCurrentTime(newTime)
+                  setPlaying(false)
+                }}
+                className="px-2 py-1 bg-gray-800/50 hover:bg-gray-700/50 rounded border border-gray-700/50 text-gray-300 transition-colors flex items-center gap-1 text-xs"
+                title="Jump Backward 5 Seconds"
+              >
+                <span className="text-xs font-medium">5s</span>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+              </button>
+
+              <button
+                onClick={() => {
+                  const newTime = Math.min(currentClip.offset + currentClip.duration, state.currentTime + 5000)
+                  setCurrentTime(newTime)
+                  setPlaying(false)
+                }}
+                className="px-2 py-1 bg-gray-800/50 hover:bg-gray-700/50 rounded border border-gray-700/50 text-gray-300 transition-colors flex items-center gap-1 text-xs"
+                title="Jump Forward 5 Seconds"
+              >
+                <span className="text-xs font-medium">5s</span>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Separator */}
+            <div className="w-px h-4 bg-gray-700/50 mx-1" />
+
+            {/* Play/Pause button */}
+            <button
+              onClick={handlePlayPause}
+              className="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 rounded border border-gray-700/50 text-gray-300 transition-colors flex items-center"
+              title={state.isPlaying ? 'Pause' : 'Play'}
+            >
+              {state.isPlaying ? (
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              )}
+            </button>
+
+            {/* Stop button */}
+            <button
+              onClick={handleStop}
+              className="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 rounded border border-gray-700/50 text-gray-300 transition-colors flex items-center"
+              title="Stop"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 6h12v12H6z" />
+              </svg>
+            </button>
+          </div>
         </div>
       )}
     </div>

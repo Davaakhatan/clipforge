@@ -18,16 +18,28 @@ const ImageDurationDialog: React.FC<ImageDurationDialogProps> = ({ onConfirm, on
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={onCancel}>
-      <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md mx-4 border border-gray-700" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-xl font-bold text-white mb-4">Image Duration</h3>
-        <p className="text-gray-400 text-sm mb-4">How long should this image be displayed? (in seconds)</p>
+      <div className="bg-gray-900 rounded p-6 w-full max-w-md mx-4 border border-gray-700/50" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h3 className="text-lg font-medium text-gray-300 mb-1">Image Duration</h3>
+            <p className="text-gray-500 text-xs">How long should this image be displayed? (in seconds)</p>
+          </div>
+          <button
+            onClick={onCancel}
+            className="text-gray-400 hover:text-gray-300 transition-colors p-1.5 hover:bg-gray-800/50 rounded"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
         <input
           type="number"
           min="0.1"
           step="0.1"
           value={duration}
           onChange={(e) => setDuration(e.target.value)}
-          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white mb-4 focus:outline-none focus:ring-2 focus:ring-accent"
+          className="w-full px-2.5 py-1.5 bg-gray-900/50 border border-gray-600/50 rounded text-gray-300 text-xs mb-3 focus:outline-none focus:ring-1 focus:ring-gray-500/50"
           placeholder="3"
           autoFocus
           onKeyDown={(e) => {
@@ -38,16 +50,16 @@ const ImageDurationDialog: React.FC<ImageDurationDialogProps> = ({ onConfirm, on
             }
           }}
         />
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-white font-medium transition-colors"
+            className="flex-1 px-3 py-1.5 bg-gray-800/50 hover:bg-gray-700/50 rounded border border-gray-700/50 text-gray-300 text-xs font-medium transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
-            className="flex-1 px-4 py-2 bg-accent hover:bg-blue-600 rounded-lg text-white font-medium transition-colors"
+            className="flex-1 px-3 py-1.5 bg-gray-700/50 hover:bg-gray-600/50 rounded border border-gray-600/50 text-gray-300 text-xs font-medium transition-colors"
           >
             Import
           </button>
@@ -312,7 +324,9 @@ const MediaLibrary: React.FC = () => {
         >
           {(state.clips.length === 0 && state.audioClips.length === 0) ? (
             <div className="text-center text-gray-500 mt-12">
-              <div className="text-5xl mb-3">📹</div>
+              <svg className="w-8 h-8 text-gray-500 mb-3 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
               <p className="text-sm font-medium">Drop video, audio, or image files here</p>
               <p className="text-xs mt-2 text-gray-600">or click buttons above</p>
             </div>
@@ -327,10 +341,10 @@ const MediaLibrary: React.FC = () => {
                     e.dataTransfer.setData('text/plain', clip.id)
                     e.dataTransfer.effectAllowed = 'move'
                   }}
-                  className="group p-3 bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-xl border border-gray-700/50 hover:border-accent/50 hover:shadow-xl transition-all relative overflow-hidden cursor-grab active:cursor-grabbing backdrop-blur-sm"
+                  className="group p-2.5 bg-gray-800/30 rounded border border-gray-700/30 hover:border-gray-600/50 transition-colors relative overflow-hidden cursor-grab active:cursor-grabbing"
                 >
                   {importing.includes(clip.filePath) && (
-                    <div className="absolute inset-0 bg-dark/95 bg-opacity-90 flex items-center justify-center z-10 rounded-xl">
+                    <div className="absolute inset-0 bg-gray-900/95 flex items-center justify-center z-10 rounded">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-10 h-10 border-3 border-accent border-t-transparent rounded-full animate-spin" />
                         <div className="text-sm font-semibold text-accent">Processing...</div>
@@ -339,13 +353,31 @@ const MediaLibrary: React.FC = () => {
                   )}
                   
                   {/* Thumbnail */}
-                  <div className="w-full h-32 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg mb-3 flex items-center justify-center overflow-hidden border border-gray-700/50 group-hover:border-accent/30 transition-colors">
+                  <div className="w-full h-32 bg-gray-900/50 rounded mb-2.5 flex items-center justify-center overflow-hidden border border-gray-700/30 group-hover:border-gray-600/30 transition-colors">
                     {clip.thumbnail ? (
-                      <img src={clip.thumbnail} alt={clip.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <img 
+                        src={clip.thumbnail.startsWith('file://') ? clip.thumbnail : `file://${clip.thumbnail}`}
+                        alt={clip.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          // Fallback to placeholder if thumbnail fails to load
+                          const target = e.target as HTMLImageElement
+                          target.style.display = 'none'
+                          const parent = target.parentElement
+                          if (parent && !parent.querySelector('svg')) {
+                            parent.innerHTML = `
+                              <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            `
+                          }
+                        }}
+                      />
                     ) : (
                       <div className="flex flex-col items-center gap-2">
-                        <div className="w-12 h-12 border-2 border-gray-600 border-t-accent rounded-full animate-spin" />
-                        <span className="text-xs text-gray-500">Loading...</span>
+                        <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap har="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 ể002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
                       </div>
                     )}
                   </div>
@@ -361,7 +393,7 @@ const MediaLibrary: React.FC = () => {
                           removeClip(clip.id)
                           saveHistory()
                         }}
-                        className="w-5 h-5 bg-red-600/80 hover:bg-red-600 rounded-md flex items-center justify-center text-white text-xs shadow-md opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                        className="w-5 h-5 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded flex items-center justify-center text-gray-300 text-xs opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                         title="Delete clip"
                       >
                         ×
@@ -374,7 +406,7 @@ const MediaLibrary: React.FC = () => {
                         </svg>
                         <span>{formatTime(clip.duration)}</span>
                       </div>
-                      <div className="flex items-center gap-1 text-accent font-semibold">
+                      <div className="flex items-center gap-1 text-gray-400 font-medium">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
@@ -424,7 +456,7 @@ const MediaLibrary: React.FC = () => {
                           removeAudioClip(clip.id)
                           saveHistory()
                         }}
-                        className="w-5 h-5 bg-red-600/80 hover:bg-red-600 rounded-md flex items-center justify-center text-white text-xs shadow-md opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                        className="w-5 h-5 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded flex items-center justify-center text-gray-300 text-xs opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                         title="Delete clip"
                       >
                         ×

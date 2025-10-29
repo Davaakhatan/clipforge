@@ -116,7 +116,8 @@ const Timeline: React.FC = () => {
 
     // Snap to closest target if within threshold
     if (closestTarget) {
-      return { snappedTime: closestTarget.time, target: closestTarget }
+      const target = closestTarget as { time: number; type: 'playhead' | 'clip-start' | 'clip-end' }
+      return { snappedTime: target.time, target: target }
     }
 
     // Otherwise snap to grid (1 second intervals)
@@ -206,24 +207,6 @@ const Timeline: React.FC = () => {
     setZoom(preset)
   }
 
-  // Frame navigation
-  const handleFrameBackward = () => {
-    const frameTime = 1000 / 30 // Assuming 30fps
-    setCurrentTime(Math.max(0, state.currentTime - frameTime))
-  }
-
-  const handleFrameForward = () => {
-    const frameTime = 1000 / 30 // Assuming 30fps
-    setCurrentTime(Math.min(totalDuration, state.currentTime + frameTime))
-  }
-
-  const handleGoToStart = () => {
-    setCurrentTime(0)
-  }
-
-  const handleGoToEnd = () => {
-    setCurrentTime(totalDuration)
-  }
 
   // Handle clip drag
   const handleClipMouseDown = useCallback((e: ReactMouseEvent, clip: Clip) => {
@@ -396,99 +379,30 @@ const Timeline: React.FC = () => {
           <h2 className="text-sm font-semibold">Timeline</h2>
           <span className="text-xs text-gray-500">{state.clips.length} clips</span>
           {selectedClipId && (
-            <span className="text-xs text-blue-400">● Selected</span>
+            <span className="text-xs text-gray-400">● Selected</span>
           )}
         </div>
         
         <div className="flex items-center gap-2 ml-auto">
-          {/* Frame Navigation */}
+          {/* Zoom Presets */}
           <div className="flex items-center gap-1">
             <button
-              onClick={handleGoToStart}
-              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
-              title="Go to Start"
-            >
-              ⏮
-            </button>
-            <button
-              onClick={handleFrameBackward}
-              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
-              title="Frame Backward"
-            >
-              ⏪
-            </button>
-            <button
-              onClick={handleFrameForward}
-              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
-              title="Frame Forward"
-            >
-              ⏩
-            </button>
-            <button
-              onClick={handleGoToEnd}
-              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
-              title="Go to End"
-            >
-              ⏭
-            </button>
-          </div>
-
-          {/* Time Navigation */}
-          <div className="border-l border-gray-700 ml-2 pl-2 flex items-center gap-1">
-            <button
-              onClick={() => setCurrentTime(Math.max(0, state.currentTime - 1000))}
-              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
-              title="1s Back"
-            >
-              1s ⏪
-            </button>
-            <button
-              onClick={() => setCurrentTime(Math.min(totalDuration, state.currentTime + 1000))}
-              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
-              title="1s Forward"
-            >
-              1s ⏩
-            </button>
-            <button
-              onClick={() => setCurrentTime(Math.max(0, state.currentTime - 5000))}
-              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
-              title="5s Back"
-            >
-              5s ⏪
-            </button>
-            <button
-              onClick={() => setCurrentTime(Math.min(totalDuration, state.currentTime + 5000))}
-              className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs"
-              title="5s Forward"
-            >
-              5s ⏩
-            </button>
-          </div>
-
-          {/* Current Time Display */}
-          <div className="text-xs text-gray-400 font-mono px-2 border-l border-gray-700 ml-2">
-            {formatTime(state.currentTime)}
-          </div>
-          
-          {/* Zoom Presets */}
-          <div className="border-l border-gray-700 ml-2 pl-2 flex items-center gap-1">
-            <button
               onClick={() => handleZoomPreset(0.5)}
-              className={`px-2 py-1 rounded text-xs ${zoom === 0.5 ? 'bg-blue-600 text-white' : 'bg-gray-800 hover:bg-gray-700'}`}
+              className={`px-2 py-1 rounded text-xs border transition-colors ${zoom === 0.5 ? 'bg-gray-700/50 border-gray-600/50 text-gray-300' : 'bg-gray-800/50 border-gray-700/50 text-gray-400 hover:bg-gray-700/50 hover:border-gray-600/50'}`}
               title="50% Zoom"
             >
               50%
             </button>
             <button
               onClick={() => handleZoomPreset(1)}
-              className={`px-2 py-1 rounded text-xs ${zoom === 1 ? 'bg-blue-600 text-white' : 'bg-gray-800 hover:bg-gray-700'}`}
+              className={`px-2 py-1 rounded text-xs border transition-colors ${zoom === 1 ? 'bg-gray-700/50 border-gray-600/50 text-gray-300' : 'bg-gray-800/50 border-gray-700/50 text-gray-400 hover:bg-gray-700/50 hover:border-gray-600/50'}`}
               title="100% Zoom"
             >
               100%
             </button>
             <button
               onClick={() => handleZoomPreset(2)}
-              className={`px-2 py-1 rounded text-xs ${zoom === 2 ? 'bg-blue-600 text-white' : 'bg-gray-800 hover:bg-gray-700'}`}
+              className={`px-2 py-1 rounded text-xs border transition-colors ${zoom === 2 ? 'bg-gray-700/50 border-gray-600/50 text-gray-300' : 'bg-gray-800/50 border-gray-700/50 text-gray-400 hover:bg-gray-700/50 hover:border-gray-600/50'}`}
               title="200% Zoom"
             >
               200%
@@ -527,14 +441,14 @@ const Timeline: React.FC = () => {
           <div className="border-l border-gray-700 ml-2 pl-2">
             <button
               onClick={() => setSnappingEnabled(!snappingEnabled)}
-              className={`px-3 py-1 rounded text-xs transition-colors ${
+              className={`px-3 py-1 rounded text-xs transition-colors border ${
                 snappingEnabled 
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                  : 'bg-gray-800 hover:bg-gray-700 text-gray-400'
+                  ? 'bg-gray-700/50 border-gray-600/50 text-gray-300 hover:bg-gray-600/50' 
+                  : 'bg-gray-800/50 border-gray-700/50 text-gray-400 hover:bg-gray-700/50 hover:border-gray-600/50'
               }`}
               title={snappingEnabled ? 'Snapping: ON (Click to disable)' : 'Snapping: OFF (Click to enable)'}
             >
-              {snappingEnabled ? '🔗 Snap' : '🔓 Snap'}
+              {snappingEnabled ? 'Snap' : 'Snap'}
             </button>
           </div>
         </div>
@@ -591,10 +505,10 @@ const Timeline: React.FC = () => {
             
             {/* Playhead */}
             <div
-              className="absolute top-0 w-0.5 h-full bg-accent z-20 pointer-events-none"
+              className="absolute top-0 w-0.5 h-full bg-gray-400 z-20 pointer-events-none"
               style={{ left: `${timeToPx(state.currentTime)}px` }}
             >
-              <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-accent rounded-full"></div>
+              <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-gray-400 rounded-full border border-gray-600"></div>
             </div>
           </div>
         </div>
@@ -615,7 +529,7 @@ const Timeline: React.FC = () => {
             <div className="h-24 border-b border-gray-800 bg-dark flex relative">
               {/* Track Header */}
               <div className="w-20 border-r border-gray-800 bg-dark-tertiary flex flex-col items-center justify-center text-xs text-gray-400">
-                <div>📝 Text</div>
+                <div>Text</div>
               </div>
 
               {/* Track Content */}
@@ -632,10 +546,10 @@ const Timeline: React.FC = () => {
                   return (
                     <div
                       key={overlay.id}
-                      className={`absolute h-16 top-2 rounded-lg border-2 flex items-center justify-center cursor-pointer shadow-lg transition-all ${
+                      className={`absolute h-16 top-2 rounded border flex items-center justify-center cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-yellow-400 bg-yellow-400 bg-opacity-20 ring-2 ring-yellow-300'
-                          : 'border-yellow-600 bg-yellow-600 bg-opacity-10 hover:bg-opacity-20'
+                          ? 'border-gray-400 bg-gray-800/30 ring-1 ring-gray-400'
+                          : 'border-gray-600 bg-gray-800/20 hover:bg-gray-800/30'
                       }`}
                       style={{
                         left: `${timeToPx(absoluteStart)}px`,
@@ -650,12 +564,14 @@ const Timeline: React.FC = () => {
                     >
                       {/* Text preview */}
                       <div className="px-2 py-1 flex items-center gap-2">
-                        <span className="text-lg">📝</span>
+                        <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-white truncate">
+                          <p className="text-xs font-medium text-gray-300 truncate">
                             {overlay.text}
                           </p>
-                          <p className="text-[10px] text-gray-400">
+                          <p className="text-[10px] text-gray-500">
                             {formatTime(duration)}
                           </p>
                         </div>
@@ -670,7 +586,7 @@ const Timeline: React.FC = () => {
                             setSelectedTextOverlay(null)
                             saveHistory()
                           }}
-                          className="absolute -top-2 -right-2 w-5 h-5 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white text-xs shadow-lg"
+                          className="absolute -top-2 -right-2 w-5 h-5 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center text-gray-300 text-xs"
                         >
                           ×
                         </button>
@@ -681,7 +597,7 @@ const Timeline: React.FC = () => {
 
                 {/* Playhead */}
                 <div
-                  className="absolute top-0 bottom-0 w-1 bg-red-500 z-20"
+                  className="absolute top-0 bottom-0 w-1 bg-gray-400 z-20"
                   style={{ left: `${timeToPx(state.currentTime)}px` }}
                 />
               </div>
@@ -719,12 +635,12 @@ const Timeline: React.FC = () => {
                 return (
                   <div
                     key={clip.id}
-                    className={`absolute h-28 top-2 rounded-lg border-2 flex flex-col cursor-move shadow-lg transition-all overflow-visible ${
+                    className={`absolute h-28 top-2 rounded border flex flex-col cursor-move transition-all overflow-visible ${
                       isSelected
-                        ? 'border-white ring-2 ring-blue-400 ring-opacity-50'
+                        ? 'border-gray-300 ring-1 ring-gray-400'
                         : isMultiSelected
-                        ? 'border-orange-400 ring-2 ring-orange-400 ring-opacity-50'
-                        : 'border-blue-500 hover:border-blue-400'
+                        ? 'border-gray-400 ring-1 ring-gray-500'
+                        : 'border-gray-600 hover:border-gray-500'
                     }`}
                     style={{
                       left: `${timeToPx(clip.offset)}px`,
@@ -759,28 +675,28 @@ const Timeline: React.FC = () => {
                           className="w-full h-full object-cover opacity-90"
                         />
                       ) : (
-                        <div className="h-full bg-blue-600 flex items-center justify-center">
-                          <p className="text-xs text-blue-100">{formatTime(clip.duration)}</p>
+                        <div className="h-full bg-gray-700/50 flex items-center justify-center border border-gray-600/30">
+                          <p className="text-xs text-gray-300">{formatTime(clip.duration)}</p>
                         </div>
                       )}
                       
                       {/* Clip name overlay */}
                       <div className="absolute top-1 left-1 right-1">
-                        <p className="text-[10px] font-bold text-white bg-black bg-opacity-60 px-1 rounded truncate">
+                        <p className="text-[10px] font-medium text-gray-200 bg-gray-900/70 px-1 rounded truncate">
                           {clip.name}
                         </p>
                       </div>
                       
                       {/* Duration overlay at bottom */}
                       <div className="absolute bottom-1 right-1">
-                        <p className="text-[10px] text-white bg-black bg-opacity-60 px-1 rounded">
+                        <p className="text-[10px] text-gray-200 bg-gray-900/70 px-1 rounded">
                           {formatTime(clip.duration)}
                         </p>
                       </div>
                       
                       {/* Speed indicator */}
                       <div className="absolute bottom-1 left-1">
-                        <p className="text-[10px] text-white bg-green-600 bg-opacity-80 px-1 rounded font-bold">
+                        <p className="text-[10px] text-gray-200 bg-gray-900/70 px-1 rounded font-medium">
                           {clip.speed}x
                         </p>
                       </div>
@@ -788,8 +704,8 @@ const Timeline: React.FC = () => {
                       {/* Volume indicator - only show if not 100% */}
                       {clip.volume !== 1 && (
                         <div className="absolute bottom-1 left-[calc(0.25rem+2.5rem)]">
-                          <p className="text-[10px] text-white bg-orange-600 bg-opacity-80 px-1 rounded font-bold">
-                            🔊{Math.round(clip.volume * 100)}%
+                          <p className="text-[10px] text-gray-200 bg-gray-900/70 px-1 rounded font-medium">
+                            {Math.round(clip.volume * 100)}%
                           </p>
                         </div>
                       )}
@@ -804,7 +720,7 @@ const Timeline: React.FC = () => {
                           setSelectedClipId(null)
                           saveHistory() // Save state for undo/redo
                         }}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white text-xs shadow-lg"
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded-full flex items-center justify-center text-gray-300 text-xs transition-colors"
                       >
                         ×
                       </button>
@@ -820,7 +736,7 @@ const Timeline: React.FC = () => {
                         >
                           {/* Thin white trim bar - ONLY this triggers resize, very small area */}
                           <div 
-                            className={`trim-bar absolute left-0 top-0 bottom-0 w-1.5 bg-white border-r-2 border-blue-500 pointer-events-auto cursor-ew-resize z-10 ${isResizingClip === 'left' ? 'animate-pulse bg-blue-400 w-2' : ''}`}
+                            className={`trim-bar absolute left-0 top-0 bottom-0 w-1.5 bg-white border-r-2 border-gray-500 pointer-events-auto cursor-ew-resize z-10 ${isResizingClip === 'left' ? 'animate-pulse bg-gray-400 w-2' : ''}`}
                             onMouseDown={(e) => {
                               e.stopPropagation()
                               handleResizeStart(e, 'left', clip)
@@ -831,19 +747,19 @@ const Timeline: React.FC = () => {
                           <div 
                             className="trim-handle-zone absolute -left-6 top-0 bottom-0 w-6 flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity pointer-events-none"
                           >
-                            <div className="w-8 h-full bg-blue-500 bg-opacity-30 border-2 border-blue-500 rounded-lg flex flex-col items-center justify-center">
+                            <div className="w-8 h-full bg-gray-700/30 border-2 border-gray-600 rounded flex flex-col items-center justify-center">
                               {/* Triple line indicator for drag */}
                               <div className="space-y-1">
-                                <div className="w-4 h-0.5 bg-blue-500" />
-                                <div className="w-4 h-0.5 bg-blue-500" />
-                                <div className="w-4 h-0.5 bg-blue-500" />
+                                <div className="w-4 h-0.5 bg-gray-500" />
+                                <div className="w-4 h-0.5 bg-gray-500" />
+                                <div className="w-4 h-0.5 bg-gray-500" />
                               </div>
                             </div>
                           </div>
 
                           {/* Show trim feedback during drag */}
                           {trimFeedback.side === 'left' && trimFeedback.clipId === clip.id && (
-                            <div className="absolute -top-8 left-2 text-xs bg-blue-500 text-white px-2 py-1 rounded shadow-lg whitespace-nowrap pointer-events-none">
+                            <div className="absolute -top-8 left-2 text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded border border-gray-700 whitespace-nowrap pointer-events-none">
                               -{formatTime(trimFeedback.newDuration)}
                             </div>
                           )}
@@ -855,7 +771,7 @@ const Timeline: React.FC = () => {
                         >
                           {/* White trim bar - ONLY this triggers resize, rest of clip triggers drag */}
                           <div 
-                            className={`trim-bar absolute right-0 top-0 bottom-0 w-1.5 bg-white border-l-2 border-blue-500 pointer-events-auto cursor-ew-resize z-10 ${isResizingClip === 'right' ? 'animate-pulse bg-blue-400 w-2' : ''}`}
+                            className={`trim-bar absolute right-0 top-0 bottom-0 w-1.5 bg-white border-l-2 border-gray-500 pointer-events-auto cursor-ew-resize z-10 ${isResizingClip === 'right' ? 'animate-pulse bg-gray-400 w-2' : ''}`}
                             onMouseDown={(e) => {
                               e.stopPropagation()
                               handleResizeStart(e, 'right', clip)
@@ -866,19 +782,19 @@ const Timeline: React.FC = () => {
                           <div 
                             className="trim-handle-zone absolute -right-6 top-0 bottom-0 w-6 flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity pointer-events-none"
                           >
-                            <div className="w-8 h-full bg-blue-500 bg-opacity-30 border-2 border-blue-500 rounded-lg flex flex-col items-center justify-center">
+                            <div className="w-8 h-full bg-gray-700/30 border-2 border-gray-600 rounded flex flex-col items-center justify-center">
                               {/* Triple line indicator for drag */}
                               <div className="space-y-1">
-                                <div className="w-4 h-0.5 bg-blue-500" />
-                                <div className="w-4 h-0.5 bg-blue-500" />
-                                <div className="w-4 h-0.5 bg-blue-500" />
+                                <div className="w-4 h-0.5 bg-gray-500" />
+                                <div className="w-4 h-0.5 bg-gray-500" />
+                                <div className="w-4 h-0.5 bg-gray-500" />
                               </div>
                             </div>
                           </div>
 
                           {/* Show trim feedback during drag */}
                           {trimFeedback.side === 'right' && trimFeedback.clipId === clip.id && (
-                            <div className="absolute -top-8 right-2 text-xs bg-blue-500 text-white px-2 py-1 rounded shadow-lg whitespace-nowrap pointer-events-none">
+                            <div className="absolute -top-8 right-2 text-xs bg-gray-800/90 text-gray-300 px-2 py-1 rounded border border-gray-700 whitespace-nowrap pointer-events-none">
                               -{formatTime(trimFeedback.newDuration)}
                             </div>
                           )}
@@ -893,10 +809,10 @@ const Timeline: React.FC = () => {
               {/* Snap Target Indicator - Yellow line when snapping */}
               {snapTarget && snappingEnabled && isDraggingClip && (
                 <div
-                  className="absolute top-0 bottom-0 w-0.5 bg-yellow-400 z-15 pointer-events-none animate-pulse"
+                  className="absolute top-0 bottom-0 w-0.5 bg-gray-500 z-15 pointer-events-none"
                   style={{ left: `${timeToPx(snapTarget.time)}px` }}
                 >
-                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-[9px] text-yellow-400 font-bold bg-dark px-1 rounded whitespace-nowrap">
+                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-[9px] text-gray-300 font-medium bg-gray-800 px-1 rounded border border-gray-700 whitespace-nowrap">
                     SNAPPED
                   </div>
                 </div>
@@ -921,7 +837,7 @@ const Timeline: React.FC = () => {
           <div key={track.id} className="h-24 border-b border-gray-800 bg-dark flex relative">
             {/* Track Header */}
             <div className="w-20 border-r border-gray-800 bg-dark-tertiary flex flex-col items-center justify-center text-xs text-gray-400">
-              <div>🎵 Audio {track.id + 1}</div>
+              <div>Audio {track.id + 1}</div>
             </div>
 
             {/* Track Content */}
@@ -944,7 +860,7 @@ const Timeline: React.FC = () => {
                 return (
                   <div
                     key={clip.id}
-                    className={`absolute h-16 top-2 rounded-lg border-2 flex items-center justify-center cursor-move shadow-lg transition-all overflow-visible ${
+                    className={`absolute h-16 top-2 rounded border flex items-center justify-center cursor-move transition-all overflow-visible ${
                       isSelected
                         ? 'border-pink-400 ring-2 ring-pink-300'
                         : isMultiSelected
@@ -976,12 +892,12 @@ const Timeline: React.FC = () => {
                     onMouseDown={(e) => handleAudioClipMouseDown(e, clip)}
                   >
                     {/* Audio Waveform or Icon */}
-                    <div className="flex-1 h-full bg-gradient-to-r from-pink-700 to-purple-700 flex items-center justify-center rounded">
+                    <div className="flex-1 h-full bg-gray-700/50 flex items-center justify-center rounded border border-gray-600/30">
                       <div className="px-2 py-1 flex items-center gap-2">
-                        <svg className="w-5 h-5 text-pink-300" fill="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
                         </svg>
-                        <p className="text-[10px] font-semibold text-white truncate">{clip.name}</p>
+                        <p className="text-[10px] font-medium text-gray-300 truncate">{clip.name}</p>
                       </div>
                     </div>
 
@@ -994,7 +910,7 @@ const Timeline: React.FC = () => {
                           setSelectedClipId(null)
                           saveHistory()
                         }}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white text-xs shadow-lg"
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded-full flex items-center justify-center text-gray-300 text-xs transition-colors"
                       >
                         ×
                       </button>
@@ -1003,8 +919,8 @@ const Timeline: React.FC = () => {
                     {/* Volume indicator */}
                     {clip.volume !== 1 && (
                       <div className="absolute -bottom-6 left-1">
-                        <p className="text-[10px] text-white bg-pink-600 bg-opacity-80 px-1 rounded font-bold">
-                          🔊{Math.round(clip.volume * 100)}%
+                        <p className="text-[10px] text-gray-300 bg-gray-800/80 border border-gray-600/50 px-1 rounded font-medium">
+                          {Math.round(clip.volume * 100)}%
                         </p>
                       </div>
                     )}
@@ -1015,10 +931,10 @@ const Timeline: React.FC = () => {
               {/* Snap Target Indicator - Yellow line when snapping audio clips */}
               {snapTarget && snappingEnabled && isDraggingAudioClip && (
                 <div
-                  className="absolute top-0 bottom-0 w-0.5 bg-yellow-400 z-15 pointer-events-none animate-pulse"
+                  className="absolute top-0 bottom-0 w-0.5 bg-gray-500 z-15 pointer-events-none"
                   style={{ left: `${timeToPx(snapTarget.time)}px` }}
                 >
-                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-[9px] text-yellow-400 font-bold bg-dark px-1 rounded whitespace-nowrap">
+                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-[9px] text-gray-300 font-medium bg-gray-800 px-1 rounded border border-gray-700 whitespace-nowrap">
                     SNAPPED
                   </div>
                 </div>
@@ -1026,7 +942,7 @@ const Timeline: React.FC = () => {
 
               {/* Playhead */}
               <div
-                className="absolute top-0 bottom-0 w-1 bg-red-500 z-20"
+                className="absolute top-0 bottom-0 w-1 bg-gray-400 z-20"
                 style={{ left: `${timeToPx(state.currentTime)}px` }}
               />
             </div>
@@ -1045,7 +961,7 @@ const Timeline: React.FC = () => {
             {state.clips.map((clip) => (
               <div
                 key={clip.id}
-                className="absolute h-full bg-blue-500 rounded-sm border border-blue-400"
+                className="absolute h-full bg-gray-600 rounded-sm border border-gray-500"
                 style={{
                   left: `${(clip.offset / totalDuration) * 100}%`,
                   width: `${(clip.duration / totalDuration) * 100}%`,
@@ -1057,7 +973,7 @@ const Timeline: React.FC = () => {
             {state.audioClips.map((clip) => (
               <div
                 key={clip.id}
-                className="absolute h-full bg-pink-500 rounded-sm border border-pink-400"
+                className="absolute h-full bg-gray-500 rounded-sm border border-gray-400"
                 style={{
                   left: `${(clip.offset / totalDuration) * 100}%`,
                   width: `${(clip.duration / totalDuration) * 100}%`,
@@ -1067,7 +983,7 @@ const Timeline: React.FC = () => {
             
             {/* Viewport indicator */}
             <div
-              className="absolute top-0 h-full border-2 border-accent bg-accent/20 pointer-events-none"
+              className="absolute top-0 h-full border border-gray-400 bg-gray-700/30 pointer-events-none"
               style={{
                 left: `${Math.max(0, (state.currentTime - viewportWidth / 2 / zoom) / totalDuration) * 100}%`,
                 width: `${(viewportWidth / zoom / totalDuration) * 100}%`,
@@ -1076,7 +992,7 @@ const Timeline: React.FC = () => {
             
             {/* Current time indicator */}
             <div
-              className="absolute top-0 w-0.5 h-full bg-accent pointer-events-none"
+              className="absolute top-0 w-0.5 h-full bg-gray-300 pointer-events-none"
               style={{ left: `${(state.currentTime / totalDuration) * 100}%` }}
             />
           </div>
@@ -1090,9 +1006,9 @@ const Timeline: React.FC = () => {
 
       {/* Footer Tips */}
       <div className="px-4 py-2 border-t border-gray-800 bg-dark text-xs text-gray-500">
-        💡 Drag white trim bars to trim • <kbd className="px-1 bg-gray-800 rounded">Delete</kbd> Remove • <kbd className="px-1 bg-gray-800 rounded">Cmd/Ctrl+Z</kbd> Undo • <kbd className="px-1 bg-gray-800 rounded">S</kbd> Split • <kbd className="px-1 bg-gray-800 rounded">Space</kbd> Play/Pause
+        Drag white trim bars to trim • <kbd className="px-1 bg-gray-800 rounded">Delete</kbd> Remove • <kbd className="px-1 bg-gray-800 rounded">Cmd/Ctrl+Z</kbd> Undo • <kbd className="px-1 bg-gray-800 rounded">S</kbd> Split • <kbd className="px-1 bg-gray-800 rounded">Space</kbd> Play/Pause
         {snappingEnabled && (
-          <span className="ml-2 text-yellow-400">• 🔗 Snap ON: Drag clips near playhead/edges to auto-align</span>
+          <span className="ml-2 text-gray-400">• Snap ON: Drag clips near playhead/edges to auto-align</span>
         )}
       </div>
     </div>

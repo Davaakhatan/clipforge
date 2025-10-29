@@ -78,76 +78,28 @@ const RightSidebar: React.FC = () => {
         />
       </div>
 
-      {/* Playback Controls Section */}
-      <div className="p-4 border-b border-gray-800">
-        <h3 className="text-sm font-semibold text-gray-400 mb-3">Playback</h3>
-        
-        {totalDuration > 0 ? (
-          <>
-            <button
-              onClick={handlePlayPause}
-              className="w-full h-12 bg-accent hover:bg-accent-hover rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl mb-3"
-            >
-              {state.isPlaying ? (
-                <>
-                  <svg className="w-5 h-5" fill="white" viewBox="0 0 24 24">
-                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                  </svg>
-                  <span className="font-semibold">Pause</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5 ml-1" fill="white" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                  <span className="font-semibold">Play</span>
-                </>
-              )}
-            </button>
-
-            {/* Time display */}
-            <div className="text-center text-xs text-gray-400 font-mono mb-3">
-              {formatTime(state.currentTime)} / {formatTime(totalDuration)}
-            </div>
-
-            {/* Stop button */}
-            <button
-              onClick={handleStop}
-              className="w-full py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm font-semibold transition-colors"
-            >
-              ⏹ Stop
-            </button>
-          </>
-        ) : (
-          <div className="text-gray-500 text-center text-sm">
-            <div className="text-3xl mb-2">🎬</div>
-            <p>Import a video to start</p>
-          </div>
-        )}
-      </div>
-
       {/* Clip Properties Section - Only show when clip is selected */}
       {selectedClip && (
-        <div className="p-5 border-b border-gray-800">
-          <div className="flex items-center gap-2 mb-5">
-            <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="p-3 border-b border-gray-800">
+          <div className="flex items-center gap-1.5 mb-3">
+            <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
-            <h3 className="text-sm font-semibold text-white">Clip Properties</h3>
+            <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide">Clip Properties</h3>
           </div>
           
-          <div className="space-y-5">
+          <div className="space-y-3">
             {/* Speed Control */}
-            <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-gray-800/30 rounded p-2.5 border border-gray-700/30">
+              <div className="flex items-center gap-1.5 mb-2">
+                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Speed</label>
+                <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Speed</label>
               </div>
               
               {/* Speed Presets */}
-              <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="grid grid-cols-3 gap-1.5 mb-2">
                 {[0.25, 0.5, 1, 1.25, 1.5, 2].map(speed => (
                   <button
                     key={speed}
@@ -156,10 +108,10 @@ const RightSidebar: React.FC = () => {
                       saveHistory()
                     }}
                     title={`${speed}x speed`}
-                    className={`px-2 py-1.5 text-xs font-bold rounded-md transition-all ${
+                    className={`px-2 py-1 text-xs font-medium rounded border transition-all ${
                       selectedClip.speed === speed
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                        : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                        ? 'bg-blue-600/80 border-blue-500/50 text-white'
+                        : 'bg-gray-700/50 border-gray-600/50 hover:bg-gray-600/50 text-gray-300'
                     }`}
                   >
                     {speed}x
@@ -168,7 +120,7 @@ const RightSidebar: React.FC = () => {
               </div>
               
               {/* Custom Speed Input */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <input
                   type="number"
                   min="0.1"
@@ -182,23 +134,23 @@ const RightSidebar: React.FC = () => {
                       saveHistory()
                     }
                   }}
-                  className="flex-1 px-3 py-2 bg-gray-900 border border-gray-600 rounded-md text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  placeholder="Custom speed"
+                  className="flex-1 px-2 py-1 bg-gray-900/50 border border-gray-600/50 rounded text-white text-xs focus:outline-none focus:border-blue-500/50"
+                  placeholder="Custom"
                 />
                 <span className="text-xs text-gray-500 font-mono">x</span>
               </div>
             </div>
 
             {/* Volume Control */}
-            <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-gray-800/30 rounded p-2.5 border border-gray-700/30">
+              <div className="flex items-center gap-1.5 mb-2">
+                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 010-7.072m-2.828 9.9a9 9 0 010-12.728" />
                 </svg>
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Volume</label>
+                <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Volume</label>
               </div>
               
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-5 gap-1.5 mb-2">
                 {[0, 0.25, 0.5, 0.75, 1].map(volume => (
                   <button
                     key={volume}
@@ -207,57 +159,81 @@ const RightSidebar: React.FC = () => {
                       saveHistory()
                     }}
                     title={`${volume * 100}% volume`}
-                    className={`px-2 py-2 text-sm font-bold rounded-md transition-all flex items-center justify-center ${
+                    className={`px-2 py-1.5 text-xs font-medium rounded border transition-all flex items-center justify-center ${
                       selectedClip.volume === volume
-                        ? 'bg-green-600 text-white shadow-lg shadow-green-500/30'
-                        : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                          ? volume === 0 ? 'bg-gray-700/50 border-gray-600/50 text-gray-300' : 'bg-gray-700/50 border-gray-600/50 text-gray-300'
+                        : 'bg-gray-700/50 border-gray-600/50 hover:bg-gray-600/50 text-gray-300'
                     }`}
                   >
-                    {volume === 0 ? '🔇' : volume === 0.25 ? '🔉' : volume === 0.5 ? '🔊' : volume === 0.75 ? '🔊' : '🔊'}
+                    {volume === 0 ? (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 010-7.072m-2.828 9.9a9 9 0 010-12.728" />
+                      </svg>
+                    )}
                   </button>
                 ))}
               </div>
               
-              <div className="mt-3 text-xs text-gray-500 text-center">
+              <div className="text-xs text-gray-400 text-center">
                 {Math.round(selectedClip.volume * 100)}%
               </div>
             </div>
 
             {/* Mute Video Audio Control */}
-            <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+            <div className="bg-gray-800/30 rounded p-2.5 border border-gray-700/30">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M3.63 3.63a.996.996 0 000 1.41L7.29 8.7 7 9H4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71v-4.67l5.89 5.89a.996.996 0 101.41-1.41L5.05 3.63c-.39-.39-1.02-.39-1.42 0zm5.8 5.8l-1.39 1.39 4.6 4.6v-2.22l2.81 2.81c.28-.95.13-2.12-.53-3.12L13 8.44V5.16l0 0 3.46 2.26c.26.17.51.31.77.44 1.12.57 1.73 1.04 2.01 1.3L21 12l-4.37 3.71-.92.91C15.16 16.3 14.28 16 13.37 16h-.37l-3.77-2.57z"/>
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                   </svg>
-                  <label className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Video Audio</label>
+                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Video Audio</label>
                 </div>
                 <button
                   onClick={() => {
                     updateClip(selectedClip.id, { muted: !selectedClip.muted })
                     saveHistory()
                   }}
-                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 ${
+                  className={`px-2.5 py-1 rounded border text-xs font-medium transition-all flex items-center gap-1.5 ${
                     selectedClip.muted
-                      ? 'bg-red-600 text-white shadow-lg'
-                      : 'bg-green-600 text-white shadow-lg'
+                      ? 'bg-gray-700/50 border-gray-600/50 text-gray-300'
+                      : 'bg-gray-700/50 border-gray-600/50 text-gray-300'
                   }`}
                 >
-                  {selectedClip.muted ? '🔇 Muted' : '🔊 On'}
+                  {selectedClip.muted ? (
+                    <>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                      </svg>
+                      <span>Muted</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5rados 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 010-7.072m-2.828 9.9a9 9 0 010-12.728" />
+                      </svg>
+                      <span>On</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
 
             {/* Fade Control */}
-            <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-gray-800/30 rounded p-2.5 border border-gray-700/30">
+              <div className="flex items-center gap-1.5 mb-2">
+                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                 </svg>
-                <label className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Fade Transitions</label>
+                <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Fade Transitions</label>
               </div>
               
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-5 gap-1.5">
                 {[0, 0.1, 0.2, 0.3, 0.5].map(fadeDuration => (
                   <button
                     key={fadeDuration}
@@ -266,10 +242,10 @@ const RightSidebar: React.FC = () => {
                       saveHistory()
                     }}
                     title={`${fadeDuration * 100}% fade`}
-                    className={`px-2 py-2 text-xs font-bold rounded-md transition-all ${
+                    className={`px-2 py-1 text-xs font-medium rounded border transition-all ${
                       (selectedClip.fadeIn === fadeDuration && selectedClip.fadeOut === fadeDuration)
-                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
-                        : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                        ? 'bg-gray-700/50 border-gray-600/50 text-gray-300'
+                        : 'bg-gray-700/50 border-gray-600/50 hover:bg-gray-600/50 text-gray-300'
                     }`}
                   >
                     {fadeDuration === 0 ? 'Off' : `${fadeDuration * 100}%`}
@@ -279,13 +255,13 @@ const RightSidebar: React.FC = () => {
             </div>
 
             {/* Video Effects */}
-            <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-gray-800/30 rounded p-2.5 border border-gray-700/30">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                   </svg>
-                  <label className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Video Effects</label>
+                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Video Effects</label>
                 </div>
                 {(selectedClip.brightness !== 0 || selectedClip.contrast !== 0 || selectedClip.saturation !== 0) && (
                   <button
@@ -293,7 +269,7 @@ const RightSidebar: React.FC = () => {
                       updateClip(selectedClip.id, { brightness: 0, contrast: 0, saturation: 0 })
                       saveHistory()
                     }}
-                    className="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-xs text-gray-300 rounded transition-colors flex items-center gap-1"
+                    className="px-2 py-1 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600/50 text-xs text-gray-300 rounded transition-colors flex items-center gap-1"
                     title="Reset to default"
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,9 +296,9 @@ const RightSidebar: React.FC = () => {
                       updateClip(selectedClip.id, { brightness: parseInt(e.target.value) })
                       saveHistory()
                     }}
-                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-orange"
+                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                     style={{
-                      background: `linear-gradient(to right, #ea580c 0%, #ea580c ${(selectedClip.brightness || 0) + 100}%, #1f2937 ${(selectedClip.brightness || 0) + 100}%, #1f2937 100%)`
+                      background: `linear-gradient(to right, #4b5563 0%, #4b5563 ${(selectedClip.brightness || 0) + 100}%, #1f2937 ${(selectedClip.brightness || 0) + 100}%, #1f2937 100%)`
                     }}
                   />
                 </div>
@@ -344,7 +320,7 @@ const RightSidebar: React.FC = () => {
                     }}
                     className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                     style={{
-                      background: `linear-gradient(to right, #dc2626 0%, #dc2626 ${(selectedClip.contrast || 0) + 100}%, #1f2937 ${(selectedClip.contrast || 0) + 100}%, #1f2937 100%)`
+                      background: `linear-gradient(to right, #4b5563 0%, #4b5563 ${(selectedClip.contrast || 0) + 100}%, #1f2937 ${(selectedClip.contrast || 0) + 100}%, #1f2937 100%)`
                     }}
                   />
                 </div>
@@ -366,7 +342,7 @@ const RightSidebar: React.FC = () => {
                     }}
                     className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                     style={{
-                      background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${(selectedClip.saturation || 0) + 100}%, #1f2937 ${(selectedClip.saturation || 0) + 100}%, #1f2937 100%)`
+                      background: `linear-gradient(to right, #4b5563 0%, #4b5563 ${(selectedClip.saturation || 0) + 100}%, #1f2937 ${(selectedClip.saturation || 0) + 100}%, #1f2937 100%)`
                     }}
                   />
                 </div>
@@ -374,23 +350,18 @@ const RightSidebar: React.FC = () => {
             </div>
 
             {/* Rotation & Flip */}
-            <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-xl p-4 border border-indigo-500/20 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </div>
-                <label className="text-xs font-bold text-white uppercase tracking-wider">Rotation & Flip</label>
+            <div className="bg-gray-800/30 rounded p-2.5 border border-gray-700/30">
+              <div className="flex items-center gap-1.5 mb-2">
+                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Rotation & Flip</label>
               </div>
               
               {/* Rotation */}
-              <div className="mb-4">
-                <label className="text-xs font-semibold text-gray-400 mb-2 block flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full"></span>
-                  Rotation
-                </label>
-                <div className="grid grid-cols-4 gap-2">
+              <div className="mb-2">
+                <label className="text-xs font-medium text-gray-400 mb-1.5 block">Rotation</label>
+                <div className="grid grid-cols-4 gap-1.5">
                   {[0, 90, 180, 270].map(angle => (
                     <button
                       key={angle}
@@ -398,10 +369,10 @@ const RightSidebar: React.FC = () => {
                         updateClip(selectedClip.id, { rotation: angle })
                         saveHistory()
                       }}
-                      className={`px-3 py-2 rounded-lg border-2 transition-all text-xs font-bold ${
+                      className={`px-2 py-1 text-xs font-medium rounded border transition-all ${
                         (selectedClip.rotation || 0) === angle
-                          ? 'border-indigo-500 bg-indigo-500/20 text-white'
-                          : 'border-gray-700 bg-gray-800/80 text-gray-400 hover:border-gray-600'
+                          ? 'bg-gray-700/50 border-gray-600/50 text-gray-300'
+                          : 'bg-gray-700/50 border-gray-600/50 hover:bg-gray-600/50 text-gray-300'
                       }`}
                       title={`Rotate ${angle}°`}
                     >
@@ -412,113 +383,116 @@ const RightSidebar: React.FC = () => {
               </div>
               
               {/* Flip Controls */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 <button
                   onClick={() => {
                     updateClip(selectedClip.id, { flipHorizontal: !selectedClip.flipHorizontal })
                     saveHistory()
                   }}
-                  className={`px-4 py-3 rounded-lg border-2 transition-all text-xs font-bold flex items-center justify-center gap-2 ${
+                  className={`px-2 py-1 text-xs font-medium rounded border transition-all flex items-center justify-center gap-1.5 ${
                     selectedClip.flipHorizontal
-                      ? 'border-indigo-500 bg-indigo-500/20 text-white'
-                      : 'border-gray-700 bg-gray-800/80 text-gray-400 hover:border-gray-600'
+                      ? 'bg-blue-600/80 border-blue-500/50 text-white'
+                      : 'bg-gray-700/50 border-gray-600/50 hover:bg-gray-600/50 text-gray-300'
                   }`}
-                  title="Flip Horizontal (Mirror)"
+                  title="Flip Horizontal"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
-                  Flip H
+                  H
                 </button>
                 <button
                   onClick={() => {
                     updateClip(selectedClip.id, { flipVertical: !selectedClip.flipVertical })
                     saveHistory()
                   }}
-                  className={`px-4 py-3 rounded-lg border-2 transition-all text-xs font-bold flex items-center justify-center gap-2 ${
+                  className={`px-2 py-1 text-xs font-medium rounded border transition-all flex items-center justify-center gap-1.5 ${
                     selectedClip.flipVertical
-                      ? 'border-indigo-500 bg-indigo-500/20 text-white'
-                      : 'border-gray-700 bg-gray-800/80 text-gray-400 hover:border-gray-600'
+                      ? 'bg-blue-600/80 border-blue-500/50 text-white'
+                      : 'bg-gray-700/50 border-gray-600/50 hover:bg-gray-600/50 text-gray-300'
                   }`}
                   title="Flip Vertical"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                   </svg>
-                  Flip V
+                  V
                 </button>
               </div>
             </div>
 
             {/* Transitions */}
-            <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-xl p-4 border border-purple-500/20 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
-                </div>
-                <label className="text-xs font-bold text-white uppercase tracking-wider">Transitions</label>
+            <div className="bg-gray-800/30 rounded p-2.5 border border-gray-700/30">
+              <div className="flex items-center gap-1.5 mb-2">
+                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Transitions</label>
               </div>
               
               {/* Transition In */}
-              <div className="mb-4">
-                <label className="text-xs font-semibold text-gray-400 mb-2 block flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                  Transition In
-                </label>
+              <div className="mb-2">
+                <label className="text-xs font-medium text-gray-400 mb-1.5 block">Transition In</label>
                 <select
                   value={selectedClip.transitionIn || 'none'}
                   onChange={(e) => {
                     updateClip(selectedClip.id, { transitionIn: e.target.value as any })
                     saveHistory()
                   }}
-                  className="w-full px-3 py-2 bg-gray-900/80 border border-gray-700 rounded-lg text-white text-xs hover:border-purple-500/50 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                  className="w-full px-2 py-1 bg-gray-900/50 border border-gray-600/50 rounded text-gray-300 text-xs focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 appearance-none cursor-pointer transition-colors"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%9ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 0.5rem center',
+                    backgroundSize: '1rem',
+                    paddingRight: '2rem'
+                  }}
                 >
                   <option value="none">None</option>
-                  <option value="fade">✨ Fade In</option>
-                  <option value="slide-left">⬅️ Slide From Left</option>
-                  <option value="slide-right">➡️ Slide From Right</option>
-                  <option value="slide-up">⬆️ Slide From Top</option>
-                  <option value="slide-down">⬇️ Slide From Bottom</option>
-                  <option value="zoom-in">🔍 Zoom In</option>
-                  <option value="zoom-out">🔎 Zoom Out</option>
-                  <option value="blur">🌫️ Blur</option>
+                  <option value="fade">Fade In</option>
+                  <option value="slide-left">Slide From Left</option>
+                  <option value="slide-right">Slide From Right</option>
+                  <option value="slide-up">Slide From Top</option>
+                  <option value="slide-down">Slide From Bottom</option>
+                  <option value="zoom-in">Zoom In</option>
+                  <option value="zoom-out">Zoom Out</option>
+                  <option value="blur">Blur</option>
                 </select>
               </div>
               
               {/* Transition Out */}
-              <div className="mb-4">
-                <label className="text-xs font-semibold text-gray-400 mb-2 block flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
-                  Transition Out
-                </label>
+              <div className="mb-2">
+                <label className="text-xs font-medium text-gray-400 mb-1.5 block">Transition Out</label>
                 <select
                   value={selectedClip.transitionOut || 'none'}
                   onChange={(e) => {
                     updateClip(selectedClip.id, { transitionOut: e.target.value as any })
                     saveHistory()
                   }}
-                  className="w-full px-3 py-2 bg-gray-900/80 border border-gray-700 rounded-lg text-white text-xs hover:border-purple-500/50 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                  className="w-full px-2 py-1 bg-gray-900/50 border border-gray-600/50 rounded text-gray-300 text-xs focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 appearance-none cursor-pointer transition-colors"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%9ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 0.5rem center',
+                    backgroundSize: '1rem',
+                    paddingRight: '2rem'
+                  }}
                 >
                   <option value="none">None</option>
-                  <option value="fade">✨ Fade Out</option>
-                  <option value="slide-left">⬅️ Slide To Left</option>
-                  <option value="slide-right">➡️ Slide To Right</option>
-                  <option value="slide-up">⬆️ Slide To Top</option>
-                  <option value="slide-down">⬇️ Slide To Bottom</option>
-                  <option value="zoom-in">🔍 Zoom In</option>
-                  <option value="zoom-out">🔎 Zoom Out</option>
-                  <option value="blur">🌫️ Blur</option>
+                  <option value="fade">Fade Out</option>
+                  <option value="slide-left">Slide To Left</option>
+                  <option value="slide-right">Slide To Right</option>
+                  <option value="slide-up">Slide To Top</option>
+                  <option value="slide-down">Slide To Bottom</option>
+                  <option value="zoom-in">Zoom In</option>
+                  <option value="zoom-out">Zoom Out</option>
+                  <option value="blur">Blur</option>
                 </select>
               </div>
               
               {/* Transition Duration */}
               <div>
-                <label className="text-xs font-semibold text-gray-400 mb-2 block flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
-                  Duration (ms)
-                </label>
+                <label className="text-xs font-medium text-gray-400 mb-1.5 block">Duration (ms)</label>
                 <input
                   type="number"
                   min="100"
@@ -529,9 +503,9 @@ const RightSidebar: React.FC = () => {
                     updateClip(selectedClip.id, { transitionDuration: parseInt(e.target.value) || 500 })
                     saveHistory()
                   }}
-                  className="w-full px-3 py-2 bg-gray-900/80 border border-gray-700 rounded-lg text-white text-xs hover:border-purple-500/50 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                  className="w-full px-2 py-1 bg-gray-900/50 border border-gray-600/50 rounded text-white text-xs focus:outline-none focus:border-purple-500/50 mb-1.5"
                 />
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-1.5">
                   {[100, 300, 500, 1000].map(val => (
                     <button
                       key={val}
@@ -539,10 +513,10 @@ const RightSidebar: React.FC = () => {
                         updateClip(selectedClip.id, { transitionDuration: val })
                         saveHistory()
                       }}
-                      className={`text-xs px-2 py-1 rounded transition-colors ${
+                      className={`text-xs px-2 py-0.5 rounded border transition-colors ${
                         selectedClip.transitionDuration === val
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                          ? 'bg-purple-600/80 border-purple-500/50 text-white'
+                          : 'bg-gray-700/50 border-gray-600/50 text-gray-300 hover:bg-gray-600/50'
                       }`}
                     >
                       {val}
@@ -571,30 +545,30 @@ const RightSidebar: React.FC = () => {
                 addTextOverlay(selectedClip.id, newTextOverlay)
                 saveHistory()
               }}
-              className="w-full px-4 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-white text-sm font-bold rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+              className="w-full px-2.5 py-1.5 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
               title="Add text overlay at current playhead position"
             >
-              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              <span>Add Text Overlay</span>
+              <span>Add Text</span>
             </button>
 
             {/* Split Video Button */}
             <button
               onClick={handleSplitClip}
-              className="w-full px-4 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white text-sm font-bold rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+              className="w-full px-2.5 py-1.5 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
               title="Split video at current playhead position"
             >
-              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Split Video</span>
+              <span>Split</span>
             </button>
             
             {/* Helper text */}
-            <p className="text-xs text-gray-500 text-center mt-2">
-              💡 Double-click to edit • Drag to move • Split at playhead
+            <p className="text-xs text-gray-500 text-center mt-1.5">
+              Double-click to edit • Drag to move • Split at playhead
             </p>
             
             {/* Text Controls - Show if there are text overlays */}
@@ -604,7 +578,7 @@ const RightSidebar: React.FC = () => {
                   Text Overlays ({selectedClip.textOverlays.length})
                 </h4>
                 {selectedClip.textOverlays.map((overlay, idx) => (
-                  <div key={overlay.id} className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                  <div key={overlay.id} className="bg-gray-800/30 rounded p-2.5 border border-gray-700/30">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-semibold text-gray-300">Text #{idx + 1}</span>
                     </div>
@@ -685,31 +659,28 @@ const RightSidebar: React.FC = () => {
 
       {/* Audio Clip Properties Section - Only show when audio clip is selected */}
       {selectedAudioClip && (
-        <div className="p-5 border-b border-gray-800">
-          <div className="flex items-center gap-2 mb-5">
-            <svg className="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="p-3 border-b border-gray-800">
+          <div className="flex items-center gap-1.5 mb-3">
+            <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
             </svg>
-            <h3 className="text-sm font-semibold text-white">Audio Properties</h3>
-            <div className="ml-auto text-xs text-green-400 font-bold">
-              ✓ Selected
-            </div>
+            <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide">Audio Properties</h3>
           </div>
           
-          <div className="space-y-5">
+          <div className="space-y-3">
             {/* Audio Volume Control */}
-            <div className="bg-gradient-to-br from-pink-800/50 to-purple-800/50 rounded-xl p-4 border border-pink-500/30 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <svg className="w-5 h-5 text-pink-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            <div className="bg-gray-800/30 rounded p-2.5 border border-gray-700/30">
+              <div className="flex items-center gap-1.5 mb-2">
+                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 010-7.072m-2.828 9.9a9 9 0 010-12.728" />
                 </svg>
-                <label className="text-xs font-bold text-white uppercase tracking-wider">Volume</label>
+                <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Volume</label>
               </div>
               
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs text-gray-300">Volume Level</span>
-                  <span className="text-xs text-pink-400 font-bold font-mono">{Math.round(selectedAudioClip.volume * 100)}%</span>
+                  <span className="text-xs text-gray-300 font-medium font-mono">{Math.round(selectedAudioClip.volume * 100)}%</span>
                 </div>
                 <input
                   type="range"
@@ -723,7 +694,7 @@ const RightSidebar: React.FC = () => {
                   }}
                   className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                   style={{
-                    background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${selectedAudioClip.volume * 100}%, #1f2937 ${selectedAudioClip.volume * 100}%, #1f2937 100%)`
+                        background: `linear-gradient(to right, #4b5563 0%, #4b5563 ${selectedAudioClip.volume * 100}%, #1f2937 ${selectedAudioClip.volume * 100}%, #1f2937 100%)`
                   }}
                 />
                 
@@ -738,31 +709,36 @@ const RightSidebar: React.FC = () => {
                       }}
                       className={`text-[10px] px-2 py-1 rounded transition-colors font-bold min-w-[2.5rem] ${
                         Math.abs(selectedAudioClip.volume - vol) < 0.01
-                          ? 'bg-pink-600 text-white'
+                          ? 'bg-gray-700/50 border border-gray-600/50 text-gray-300'
                           : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                       }`}
                       title={vol === 0 ? 'Mute' : `${Math.round(vol * 100)}%`}
                     >
-                      {vol === 0 ? '🔇' : `${Math.round(vol * 100)}%`}
+                      {vol === 0 ? (
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                        </svg>
+                      ) : `${Math.round(vol * 100)}%`}
                     </button>
                   ))}
                 </div>
               </div>
 
                 {/* Fade Controls */}
-                <div className="mt-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="mt-2">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2M7 4h10M7 4l-2 16h14l-2-16M9 9v6M15 9v6" />
                     </svg>
-                    <span className="text-sm font-semibold text-gray-300">Fade Effects</span>
+                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Fade Effects</label>
                   </div>
                   
                   {/* Fade In */}
                   <div className="mb-3">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-gray-400">Fade In</span>
-                      <span className="text-xs text-pink-400 font-bold">
+                      <span className="text-xs text-gray-300 font-medium">
                         {selectedAudioClip.fadeIn ? `${selectedAudioClip.fadeIn}ms` : '0ms'}
                       </span>
                     </div>
@@ -778,7 +754,7 @@ const RightSidebar: React.FC = () => {
                       }}
                       className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
                       style={{
-                        background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${((selectedAudioClip.fadeIn || 0) / 2000) * 100}%, #1f2937 ${((selectedAudioClip.fadeIn || 0) / 2000) * 100}%, #1f2937 100%)`
+                        background: `linear-gradient(to right, #4b5563 0%, #4b5563 ${((selectedAudioClip.fadeIn || 0) / 2000) * 100}%, #1f2937 ${((selectedAudioClip.fadeIn || 0) / 2000) * 100}%, #1f2937 100%)`
                       }}
                     />
                   </div>
@@ -787,7 +763,7 @@ const RightSidebar: React.FC = () => {
                   <div className="mb-3">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-gray-400">Fade Out</span>
-                      <span className="text-xs text-pink-400 font-bold">
+                      <span className="text-xs text-gray-300 font-medium">
                         {selectedAudioClip.fadeOut ? `${selectedAudioClip.fadeOut}ms` : '0ms'}
                       </span>
                     </div>
@@ -803,7 +779,7 @@ const RightSidebar: React.FC = () => {
                       }}
                       className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
                       style={{
-                        background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${((selectedAudioClip.fadeOut || 0) / 2000) * 100}%, #1f2937 ${((selectedAudioClip.fadeOut || 0) / 2000) * 100}%, #1f2937 100%)`
+                        background: `linear-gradient(to right, #4b5563 0%, #4b5563 ${((selectedAudioClip.fadeOut || 0) / 2000) * 100}%, #1f2937 ${((selectedAudioClip.fadeOut || 0) / 2000) * 100}%, #1f2937 100%)`
                       }}
                     />
                   </div>
@@ -825,11 +801,11 @@ const RightSidebar: React.FC = () => {
                           })
                           saveHistory()
                         }}
-                        className={`text-[10px] px-2 py-1 rounded transition-colors font-bold min-w-[2.5rem] ${
+                        className={`text-[10px] px-2 py-1 rounded transition-colors font-medium min-w-[2.5rem] border ${
                           (selectedAudioClip.fadeIn || 0) === preset.fadeIn && 
                           (selectedAudioClip.fadeOut || 0) === preset.fadeOut
-                            ? 'bg-pink-600 text-white'
-                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                            ? 'bg-gray-700/50 border border-gray-600/50 text-gray-300'
+                            : 'bg-gray-800/50 border border-gray-700/50 text-gray-400 hover:bg-gray-700/50'
                         }`}
                       >
                         {preset.label}
@@ -839,12 +815,12 @@ const RightSidebar: React.FC = () => {
                 </div>
 
                 {/* Crossfade Controls */}
-                <div className="bg-gradient-to-br from-blue-800/50 to-cyan-800/50 rounded-xl p-4 border border-blue-500/30 backdrop-blur-sm mt-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                <div className="bg-gray-800/30 rounded p-2.5 border border-gray-700/30 mt-3">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
-                    <label className="text-xs font-bold text-white uppercase tracking-wider">Crossfade</label>
+                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Crossfade</label>
                   </div>
                   
                   <div className="space-y-3">
@@ -852,7 +828,7 @@ const RightSidebar: React.FC = () => {
                     <div className="mb-3">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs text-gray-400">Crossfade In</span>
-                        <span className="text-xs text-blue-400 font-bold">
+                        <span className="text-xs text-gray-300 font-medium">
                           {selectedAudioClip.crossfadeIn ? `${selectedAudioClip.crossfadeIn}ms` : '0ms'}
                         </span>
                       </div>
@@ -877,7 +853,7 @@ const RightSidebar: React.FC = () => {
                     <div className="mb-3">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs text-gray-400">Crossfade Out</span>
-                        <span className="text-xs text-blue-400 font-bold">
+                        <span className="text-xs text-gray-300 font-medium">
                           {selectedAudioClip.crossfadeOut ? `${selectedAudioClip.crossfadeOut}ms` : '0ms'}
                         </span>
                       </div>
@@ -912,11 +888,11 @@ const RightSidebar: React.FC = () => {
                             setCrossfadeAudioClip(selectedAudioClip.id, preset.crossfadeIn, preset.crossfadeOut)
                             saveHistory()
                           }}
-                          className={`text-[10px] px-2 py-1 rounded transition-colors font-bold min-w-[2.5rem] ${
+                          className={`text-[10px] px-2 py-1 rounded transition-colors font-medium min-w-[2.5rem] border ${
                             (selectedAudioClip.crossfadeIn || 0) === preset.crossfadeIn && 
                             (selectedAudioClip.crossfadeOut || 0) === preset.crossfadeOut
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                              ? 'bg-gray-700/50 border border-gray-600/50 text-gray-300'
+                              : 'bg-gray-800/50 border border-gray-700/50 text-gray-400 hover:bg-gray-700/50'
                           }`}
                         >
                           {preset.label}
@@ -927,44 +903,44 @@ const RightSidebar: React.FC = () => {
                 </div>
               
               {/* Audio Info */}
-              <div className="bg-gray-900/50 rounded-lg p-3 mt-4 border border-gray-700/30">
+              <div className="bg-gray-800/30 rounded p-2.5 mt-3 border border-gray-700/30">
                 <div className="space-y-1.5 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">📝 Name:</span>
+                    <span className="text-gray-400">Name:</span>
                     <span className="text-gray-300 font-medium truncate">{selectedAudioClip.name}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">⏱️ Duration:</span>
+                    <span className="text-gray-400">Duration:</span>
                     <span className="text-gray-300 font-mono">{Math.floor(selectedAudioClip.duration / 1000)}s</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">🎵 File:</span>
+                    <span className="text-gray-400">File:</span>
                     <span className="text-gray-400 truncate">{selectedAudioClip.filePath.split('/').pop()}</span>
                   </div>
                   {selectedAudioClip.normalized && (
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-400">🎚️ Status:</span>
-                      <span className="text-purple-400 font-bold">Normalized</span>
+                      <span className="text-gray-400">Status:</span>
+                      <span className="text-gray-300 font-medium">Normalized</span>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Audio Effects */}
-              <div className="bg-gradient-to-br from-indigo-800/50 to-purple-800/50 rounded-xl p-4 mt-4 border border-indigo-500/30 backdrop-blur-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <svg className="w-5 h-5 text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              <div className="bg-gray-800/30 rounded p-2.5 mt-3 border border-gray-700/30">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                   </svg>
-                  <label className="text-xs font-bold text-white uppercase tracking-wider">Audio Effects</label>
+                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Audio Effects</label>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {/* Reverb */}
                   <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-600/30">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                         </svg>
                         <span className="text-sm font-semibold text-gray-300">Reverb</span>
@@ -997,7 +973,7 @@ const RightSidebar: React.FC = () => {
                         <div>
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs text-gray-400">Room Size</span>
-                            <span className="text-xs text-indigo-400 font-bold">
+                            <span className="text-xs text-gray-300 font-medium">
                               {Math.round((selectedAudioClip.effects.reverb.roomSize || 0.5) * 100)}%
                             </span>
                           </div>
@@ -1028,7 +1004,7 @@ const RightSidebar: React.FC = () => {
                         <div>
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs text-gray-400">Wet Mix</span>
-                            <span className="text-xs text-indigo-400 font-bold">
+                            <span className="text-xs text-gray-300 font-medium">
                               {Math.round((selectedAudioClip.effects.reverb.wet || 0.3) * 100)}%
                             </span>
                           </div>
@@ -1063,7 +1039,7 @@ const RightSidebar: React.FC = () => {
                   <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-600/30">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                         <span className="text-sm font-semibold text-gray-300">Echo</span>
@@ -1096,7 +1072,7 @@ const RightSidebar: React.FC = () => {
                         <div>
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs text-gray-400">Delay</span>
-                            <span className="text-xs text-cyan-400 font-bold">
+                            <span className="text-xs text-gray-300 font-medium">
                               {selectedAudioClip.effects.echo.delay || 250}ms
                             </span>
                           </div>
@@ -1127,7 +1103,7 @@ const RightSidebar: React.FC = () => {
                         <div>
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs text-gray-400">Feedback</span>
-                            <span className="text-xs text-cyan-400 font-bold">
+                            <span className="text-xs text-gray-300 font-medium">
                               {Math.round((selectedAudioClip.effects.echo.feedback || 0.3) * 100)}%
                             </span>
                           </div>
@@ -1194,7 +1170,7 @@ const RightSidebar: React.FC = () => {
                         <div>
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs text-gray-400">Amount</span>
-                            <span className="text-xs text-red-400 font-bold">
+                            <span className="text-xs text-gray-300 font-medium">
                               {Math.round((selectedAudioClip.effects.distortion.amount || 0.5) * 100)}%
                             </span>
                           </div>
@@ -1283,41 +1259,41 @@ const RightSidebar: React.FC = () => {
               </div>
 
               {/* Audio Action Buttons */}
-              <div className="mt-4 space-y-2">
+              <div className="mt-3 space-y-1.5">
                 {/* Split Audio Button */}
                 <button
                   onClick={handleSplitAudioClip}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white text-sm font-bold rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+                  className="w-full px-2.5 py-1.5 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
                   title="Split audio at current playhead position"
                 >
-                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Split Audio</span>
+                  <span>Split</span>
                 </button>
 
                 {/* Duplicate Audio Button */}
                 <button
                   onClick={handleDuplicateAudioClip}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-sm font-bold rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+                  className="w-full px-2.5 py-1.5 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
                   title="Duplicate this audio clip"
                 >
-                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
-                  <span>Duplicate Audio</span>
+                  <span>Duplicate</span>
                 </button>
 
                 {/* Normalize Audio Button */}
                 <button
                   onClick={handleNormalizeAudioClip}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-sm font-bold rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+                  className="w-full px-2.5 py-1.5 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
                   title="Normalize audio to consistent volume level"
                 >
-                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                   </svg>
-                  <span>Normalize Audio</span>
+                  <span>Normalize</span>
                 </button>
               </div>
             </div>
@@ -1332,7 +1308,7 @@ const RightSidebar: React.FC = () => {
             <p>Select a clip to edit its properties</p>
             {state.audioClips.length > 0 && (
               <div className="text-xs text-gray-500">
-                <p>🎵 Audio clips available: {state.audioClips.length}</p>
+                <p>Audio clips available: {state.audioClips.length}</p>
                 <p>Click on an audio clip to see:</p>
                 <p>• Volume controls • Fade effects • Crossfade</p>
                 <p>• Split • Duplicate • Normalize</p>
@@ -1343,23 +1319,23 @@ const RightSidebar: React.FC = () => {
       )}
 
       {/* AI Features Section */}
-      <div className="p-4 border-t border-gray-800">
-        <h3 className="text-sm font-semibold text-white mb-3">AI Features</h3>
+      <div className="p-3 border-t border-gray-800">
+        <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">AI Features</h3>
         <div className="flex gap-1.5">
           <button
             onClick={() => setShowAIFeatures(true)}
-            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-1.5 px-2 rounded-md transition-colors text-xs flex items-center justify-center gap-1"
+            className="flex-1 bg-gray-800/50 hover:bg-gray-700/50 text-gray-300 py-1.5 px-2 rounded border border-gray-700/50 transition-colors text-xs font-medium flex items-center justify-center gap-1"
           >
             <span>AI Tools</span>
           </button>
           <button
             onClick={() => setShowAISettings(true)}
-            className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white py-1.5 px-2 rounded-md transition-colors text-xs flex items-center justify-center gap-1"
+            className="flex-1 bg-gray-800/50 hover:bg-gray-700/50 text-gray-300 py-1.5 px-2 rounded border border-gray-700/50 transition-colors text-xs font-medium flex items-center justify-center gap-1"
           >
             <span>Settings</span>
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-2">Auto captions, smart editing, AI suggestions</p>
+        <p className="text-xs text-gray-500 mt-1.5">Auto captions, smart editing, AI suggestions</p>
       </div>
 
       {/* AI Modals */}

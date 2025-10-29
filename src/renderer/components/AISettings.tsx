@@ -99,49 +99,54 @@ export const AISettings: React.FC<AISettingsProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-white">AI Settings</h2>
+      <div className="bg-gray-900 rounded p-6 w-full max-w-md mx-4 border border-gray-700/50">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-lg font-medium text-gray-300 mb-1">AI Settings</h2>
+            <p className="text-gray-500 text-xs">Configure OpenAI API integration</p>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-gray-400 hover:text-gray-300 transition-colors p-1.5 hover:bg-gray-800/50 rounded"
           >
-            ✕
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
-            <h3 className="text-lg font-medium text-white mb-2">OpenAI API Integration</h3>
-            <p className="text-gray-400 text-sm mb-4">
+            <h3 className="text-sm font-medium text-gray-300 mb-1.5">OpenAI API Integration</h3>
+            <p className="text-gray-500 text-xs mb-3">
               Enter your OpenAI API key to unlock AI-powered features like auto captions, smart editing suggestions, and content analysis.
             </p>
             
             {/* Configuration Status */}
-            <div className={`p-3 rounded-md border ${
+            <div className={`p-2.5 rounded border ${
               isConfigured 
-                ? 'bg-green-900/20 border-green-500/50 text-green-400' 
-                : 'bg-yellow-900/20 border-yellow-500/50 text-yellow-400'
+                ? 'bg-gray-800/30 border-gray-600/50' 
+                : 'bg-gray-800/30 border-gray-600/50'
             }`}>
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${
-                  isConfigured ? 'bg-green-400' : 'bg-yellow-400'
+                <div className={`w-1.5 h-1.5 rounded-full ${
+                  isConfigured ? 'bg-gray-400' : 'bg-gray-500'
                 }`}></div>
-                <span className="text-sm font-medium">
+                <span className="text-xs font-medium text-gray-300">
                   {isConfigured ? 'AI API Configured' : 'AI API Not Configured'}
                 </span>
               </div>
-              <p className="text-xs mt-1">
+              <p className="text-xs mt-1 text-gray-500">
                 {isConfigured 
-                  ? 'AI features are ready to use!' 
-                  : 'Configure your API key to enable AI features.'
+                  ? 'AI features are ready to use' 
+                  : 'Configure your API key to enable AI features'
                 }
               </p>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">
               OpenAI API Key
             </label>
             <input
@@ -149,33 +154,33 @@ export const AISettings: React.FC<AISettingsProps> = ({ isOpen, onClose }) => {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="sk-..."
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-2.5 py-1.5 bg-gray-900/50 border border-gray-600/50 rounded text-gray-300 text-xs placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500/50"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Your API key is stored locally and never shared.
+              Your API key is stored locally and never shared
             </p>
           </div>
 
           {error && (
-            <div className="bg-red-900/20 border border-red-500/50 rounded-md p-3">
-              <p className="text-red-400 text-sm">{error}</p>
+            <div className="bg-gray-800/30 border border-gray-600/50 rounded p-2.5">
+              <p className="text-gray-300 text-xs">{error}</p>
             </div>
           )}
 
           {success && (
-            <div className="bg-green-900/20 border border-green-500/50 rounded-md p-3">
-              <p className="text-green-400 text-sm">{success}</p>
+            <div className="bg-gray-800/30 border border-gray-600/50 rounded p-2.5">
+              <p className="text-gray-300 text-xs">{success}</p>
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             {!isConfigured ? (
               <button
                 onClick={handleSaveAPIKey}
                 disabled={isLoading}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 text-white px-4 py-2 rounded-md transition-colors"
+                className="flex-1 bg-gray-700/50 hover:bg-gray-600/50 disabled:bg-gray-700/30 text-gray-300 px-3 py-1.5 rounded border border-gray-600/50 transition-colors text-xs font-medium"
               >
-                {isLoading ? 'Saving...' : '✓ Save & Configure'}
+                {isLoading ? 'Saving...' : 'Save & Configure'}
               </button>
             ) : (
               <button
@@ -199,15 +204,15 @@ export const AISettings: React.FC<AISettingsProps> = ({ isOpen, onClose }) => {
                   }
                 }}
                 disabled={isLoading}
-                className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 text-white px-4 py-2 rounded-md transition-colors"
+                className="flex-1 bg-gray-700/50 hover:bg-gray-600/50 disabled:bg-gray-700/30 text-gray-300 px-3 py-1.5 rounded border border-gray-600/50 transition-colors text-xs font-medium"
               >
-                {isLoading ? 'Clearing...' : '🗑️ Clear Configuration'}
+                {isLoading ? 'Clearing...' : 'Clear Configuration'}
               </button>
             )}
             <button
               onClick={handleTestConnection}
               disabled={isLoading || !isConfigured}
-              className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 text-white px-4 py-2 rounded-md transition-colors"
+              className="flex-1 bg-gray-700/50 hover:bg-gray-600/50 disabled:bg-gray-700/30 text-gray-300 px-3 py-1.5 rounded border border-gray-600/50 transition-colors text-xs font-medium"
             >
               {isLoading ? 'Testing...' : 'Test Connection'}
             </button>
@@ -215,15 +220,15 @@ export const AISettings: React.FC<AISettingsProps> = ({ isOpen, onClose }) => {
 
           <button
             onClick={onClose}
-            className="w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors"
+            className="w-full bg-gray-800/50 hover:bg-gray-700/50 text-gray-300 px-3 py-1.5 rounded border border-gray-700/50 transition-colors text-xs font-medium mt-2"
           >
             Cancel
           </button>
         </div>
 
-        <div className="mt-6">
-          <h4 className="text-sm font-medium text-gray-300 mb-3">AI Features Available:</h4>
-          <ul className="text-xs text-gray-400 space-y-1">
+        <div className="mt-4 pt-4 border-t border-gray-700/50">
+          <h4 className="text-xs font-medium text-gray-400 mb-2">AI Features Available:</h4>
+          <ul className="text-xs text-gray-500 space-y-0.5">
             <li>• Auto-generated captions from speech</li>
             <li>• Smart scene detection and cut suggestions</li>
             <li>• Intelligent text overlay generation</li>

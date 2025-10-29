@@ -21,29 +21,29 @@ const VideoSelectionDialog: React.FC<VideoSelectionDialogProps> = ({
 }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[100]">
-      <div className="bg-gray-900 rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto border border-gray-700">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-white">Select Video</h3>
+      <div className="bg-gray-900 rounded p-3 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto border border-gray-700">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-lg font-medium text-gray-300">Select Video</h3>
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-gray-400 hover:text-gray-300 transition-colors p-1.5 hover:bg-gray-800/50 rounded"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <p className="text-gray-400 text-sm mb-4">Choose from your media library or upload a new video</p>
+        <p className="text-gray-500 text-xs mb-3">Choose from your media library or upload a new video</p>
         
         {videos.length > 0 && (
           <div className="mb-6">
-            <h4 className="text-white font-semibold mb-3">Media Library</h4>
+            <h4 className="text-gray-300 font-medium text-sm mb-2">Media Library</h4>
             <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
               {videos.map((video) => (
                 <button
                   key={video.id}
                   onClick={() => onSelectFromLibrary(video.filePath)}
-                  className="bg-gray-800 hover:bg-gray-700 rounded-lg p-3 border border-gray-700 hover:border-accent transition-all text-left group"
+                  className="bg-gray-800/30 hover:bg-gray-700/30 rounded p-2.5 border border-gray-700/30 hover:border-gray-600/50 transition-colors text-left group"
                 >
                   <div className="w-full h-24 bg-gray-900 rounded mb-2 overflow-hidden flex items-center justify-center">
                     {video.thumbnail ? (
@@ -54,7 +54,7 @@ const VideoSelectionDialog: React.FC<VideoSelectionDialogProps> = ({
                       </svg>
                     )}
                   </div>
-                  <p className="text-white text-sm truncate font-medium group-hover:text-accent">{video.name}</p>
+                  <p className="text-gray-300 text-xs truncate font-medium group-hover:text-gray-200">{video.name}</p>
                 </button>
               ))}
             </div>
@@ -63,9 +63,9 @@ const VideoSelectionDialog: React.FC<VideoSelectionDialogProps> = ({
         
         <button
           onClick={onUploadNew}
-          className="w-full bg-accent hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+          className="w-full bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           <span>Upload New Video</span>
@@ -105,17 +105,17 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
       switch (action) {
         case 'captions':
           const captions = await window.electronAPI.generateCaptions(filePath)
-          setResult(`🎤 AUTO-GENERATED CAPTIONS\n\n${captions.join('\n\n')}\n\n💡 These captions were generated using OpenAI's Whisper API and include timestamps for easy editing.`)
+          setResult(`AUTO-GENERATED CAPTIONS\n\n${captions.join('\n\n')}\n\nThese captions were generated using OpenAI's Whisper API and include timestamps for easy editing.`)
           break
         case 'color':
           const suggestions = await window.electronAPI.suggestColorCorrection(filePath)
-          setResult(`🎨 AI COLOR CORRECTION SUGGESTIONS\n\nRecommended Adjustments:\n• Brightness: ${suggestions.brightness > 0 ? '+' : ''}${suggestions.brightness}\n• Contrast: ${suggestions.contrast > 0 ? '+' : ''}${suggestions.contrast}\n• Saturation: ${suggestions.saturation > 0 ? '+' : ''}${suggestions.saturation}\n• Temperature: ${suggestions.temperature > 0 ? '+' : ''}${suggestions.temperature}\n• Exposure: ${suggestions.exposure > 0 ? '+' : ''}${suggestions.exposure}\n• Shadows: ${suggestions.shadows > 0 ? '+' : ''}${suggestions.shadows}\n• Highlights: ${suggestions.highlights > 0 ? '+' : ''}${suggestions.highlights}\n\nReason: ${suggestions.reason}\nConfidence: ${Math.round((suggestions.confidence || 0.7) * 100)}%\nPreset: ${suggestions.preset}\n\n💡 These suggestions were generated using GPT-4 Vision analysis of your video frames for optimal color enhancement.`)
+          setResult(`AI COLOR CORRECTION SUGGESTIONS\n\nRecommended Adjustments:\n• Brightness: ${suggestions.brightness > 0 ? '+' : ''}${suggestions.brightness}\n• Contrast: ${suggestions.contrast > 0 ? '+' : ''}${suggestions.contrast}\n• Saturation: ${suggestions.saturation > 0 ? '+' : ''}${suggestions.saturation}\n• Temperature: ${suggestions.temperature > 0 ? '+' : ''}${suggestions.temperature}\n• Exposure: ${suggestions.exposure > 0 ? '+' : ''}${suggestions.exposure}\n• Shadows: ${suggestions.shadows > 0 ? '+' : ''}${suggestions.shadows}\n• Highlights: ${suggestions.highlights > 0 ? '+' : ''}${suggestions.highlights}\n\nReason: ${suggestions.reason}\nConfidence: ${Math.round((suggestions.confidence || 0.7) * 100)}%\nPreset: ${suggestions.preset}\n\nThese suggestions were generated using GPT-4 Vision analysis of your video frames for optimal color enhancement.`)
           break
         case 'analysis':
           const analysis = await window.electronAPI.analyzeVideoContent(filePath)
-          setResult(`🔍 SMART CONTENT ANALYSIS\n\n${analysis.map((item: any, index: number) => 
+          setResult(`SMART CONTENT ANALYSIS\n\n${analysis.map((item: any, index: number) => 
             `${index + 1}. [${item.timestamp}] ${item.type.toUpperCase()}\n   Description: ${item.description}\n   Confidence: ${Math.round((item.confidence || 0.8) * 100)}%\n   ${item.suggestions ? `Suggestions: ${item.suggestions}` : ''}`
-          ).join('\n\n')}\n\n💡 This analysis was generated using GPT-4 Vision to identify key moments, scene changes, and editing opportunities.`)
+          ).join('\n\n')}\n\nThis analysis was generated using GPT-4 Vision to identify key moments, scene changes, and editing opportunities.`)
           break
         case 'audio-cleanup':
           const audioResult = await window.electronAPI.enhanceAudioCleanup(filePath, {
@@ -124,9 +124,9 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
             volumeBoost: 5
           })
           if (audioResult.success) {
-            setResult(`✅ Audio Enhanced Successfully!\n\nOutput saved to:\n${audioResult.outputPath}\n\nApplied enhancements:\n• Noise reduction\n• Normalization\n• Volume boost (+5dB)`)
+            setResult(`Audio Enhanced Successfully!\n\nOutput saved to:\n${audioResult.outputPath}\n\nApplied enhancements:\n• Noise reduction\n• Normalization\n• Volume boost (+5dB)`)
           } else {
-            setResult(`❌ Error: ${audioResult.error}`)
+            setResult(`Error: ${audioResult.error}`)
           }
           break
         case 'workflow':
@@ -137,23 +137,23 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
             'enhance audio'
           ])
           if (workflowResult.success && workflowResult.results) {
-            setResult(`🚀 AI WORKFLOW AUTOMATION\n\nSuggested Workflow Steps:\n\n${workflowResult.results.map((step: any, i: number) => 
+            setResult(`AI WORKFLOW AUTOMATION\n\nSuggested Workflow Steps:\n\n${workflowResult.results.map((step: any, i: number) => 
               `${i + 1}. ${step.action.toUpperCase()} (Priority: ${step.priority})\n   ${step.description}\n   Estimated time: ${step.estimatedTime}s${step.startTime ? `\n   Time range: ${step.startTime}s - ${step.endTime}s` : ''}`
             ).join('\n\n')}`)
           } else {
-            setResult(`❌ Error: ${workflowResult.error || 'Unknown error'}`)
+            setResult(`Error: ${workflowResult.error || 'Unknown error'}`)
           }
           break
       }
     } catch (error: any) {
       const errorMessages: Record<string, string> = {
-        'captions': `❌ Error generating captions: ${error.message}\n\nThis might be because:\n• No audio file was selected\n• Audio file format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`,
-        'color': `❌ Error suggesting color correction: ${error.message}\n\nThis might be because:\n• No video file was selected\n• Video format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`,
-        'analysis': `❌ Error analyzing content: ${error.message}\n\nThis might be because:\n• No video file was selected\n• Video format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`,
-        'audio-cleanup': `❌ Error: ${error.message}`,
-        'workflow': `❌ Error: ${error.message}`
+        'captions': `Error generating captions: ${error.message}\n\nThis might be because:\n• No audio file was selected\n• Audio file format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`,
+        'color': `Error suggesting color correction: ${error.message}\n\nThis might be because:\n• No video file was selected\n• Video format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`,
+        'analysis': `Error analyzing content: ${error.message}\n\nThis might be because:\n• No video file was selected\n• Video format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`,
+        'audio-cleanup': `Error: ${error.message}`,
+        'workflow': `Error: ${error.message}`
       }
-      setResult(errorMessages[action] || `❌ Error: ${error.message}`)
+      setResult(errorMessages[action] || `Error: ${error.message}`)
     } finally {
       setIsLoading(false)
       setActiveFeature('')
@@ -182,7 +182,7 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
     setPendingAction(null)
     
     if (!window.electronAPI) {
-      setResult('❌ AI API not available')
+      setResult('AI API not available')
       return
     }
     
@@ -239,12 +239,12 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
       }
 
       const overlays = await window.electronAPI.generateTextOverlays('A tutorial about video editing', 60)
-      const formattedResult = `📝 INTELLIGENT TEXT OVERLAYS\n\n${overlays.map((overlay: any, index: number) => 
+      const formattedResult = `INTELLIGENT TEXT OVERLAYS\n\n${overlays.map((overlay: any, index: number) => 
         `${index + 1}. "${overlay.text}"\n   Style: ${overlay.style} | Position: ${overlay.position}\n   Duration: ${overlay.startTime}ms - ${overlay.endTime}ms\n   Animation: ${overlay.animation} | Color: ${overlay.color}\n   Font Size: ${overlay.fontSize} | Opacity: ${overlay.opacity}`
-      ).join('\n\n')}\n\n💡 These overlays were generated using GPT-4 with contextual timing and styling for maximum visual impact.`
+      ).join('\n\n')}\n\nThese overlays were generated using GPT-4 with contextual timing and styling for maximum visual impact.`
       setResult(formattedResult)
     } catch (error: any) {
-      setResult(`❌ Error generating text overlays: ${error.message}\n\nThis might be because:\n• Invalid video description\n• OpenAI API quota exceeded\n• Network connection issues`)
+      setResult(`Error generating text overlays: ${error.message}\n\nThis might be because:\n• Invalid video description\n• OpenAI API quota exceeded\n• Network connection issues`)
     } finally {
       setIsLoading(false)
       setActiveFeature('')
@@ -274,10 +274,10 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
       }
 
       const suggestions = await window.electronAPI.suggestExportSettings({ duration: 60, resolution: '1080p' })
-      const formattedResult = `⚙️ OPTIMAL EXPORT SETTINGS\n\nRecommended Configuration:\n• Resolution: ${suggestions.resolution}\n• Format: ${suggestions.format.toUpperCase()}\n• Video Codec: ${suggestions.codec.toUpperCase()}\n• Bitrate: ${suggestions.bitrate}\n• Quality: ${suggestions.quality.toUpperCase()}\n• Audio Codec: ${suggestions.audioCodec.toUpperCase()}\n• Audio Bitrate: ${suggestions.audioBitrate}\n• Frame Rate: ${suggestions.frameRate} fps\n• Preset: ${suggestions.preset}\n\nReason: ${suggestions.reason}\nEstimated File Size: ${suggestions.estimatedSize}\nCompatibility: ${suggestions.compatibility}\n\n💡 These settings were optimized using GPT-4 analysis for the best balance of quality, file size, and compatibility.`
+      const formattedResult = `OPTIMAL EXPORT SETTINGS\n\nRecommended Configuration:\n• Resolution: ${suggestions.resolution}\n• Format: ${suggestions.format.toUpperCase()}\n• Video Codec: ${suggestions.codec.toUpperCase()}\n• Bitrate: ${suggestions.bitrate}\n• Quality: ${suggestions.quality.toUpperCase()}\n• Audio Codec: ${suggestions.audioCodec.toUpperCase()}\n• Audio Bitrate: ${suggestions.audioBitrate}\n• Frame Rate: ${suggestions.frameRate} fps\n• Preset: ${suggestions.preset}\n\nReason: ${suggestions.reason}\nEstimated File Size: ${suggestions.estimatedSize}\nCompatibility: ${suggestions.compatibility}\n\nThese settings were optimized using GPT-4 analysis for the best balance of quality, file size, and compatibility.`
       setResult(formattedResult)
     } catch (error: any) {
-      setResult(`❌ Error suggesting export settings: ${error.message}\n\nThis might be because:\n• Invalid video information\n• OpenAI API quota exceeded\n• Network connection issues`)
+      setResult(`Error suggesting export settings: ${error.message}\n\nThis might be because:\n• Invalid video information\n• OpenAI API quota exceeded\n• Network connection issues`)
     } finally {
       setIsLoading(false)
       setActiveFeature('')
@@ -295,10 +295,10 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
       }
 
       const suggestions = await window.electronAPI.generateMusicSuggestions('Upbeat tutorial video', 60)
-      const formattedResult = `🎵 INTELLIGENT MUSIC SUGGESTIONS\n\n${suggestions.join('\n\n')}\n\n💡 These suggestions were generated using GPT-4 analysis considering your video content, mood, duration, and current music trends. Each suggestion includes genre, mood, duration, and where to find the track.`
+      const formattedResult = `INTELLIGENT MUSIC SUGGESTIONS\n\n${suggestions.join('\n\n')}\n\nThese suggestions were generated using GPT-4 analysis considering your video content, mood, duration, and current music trends. Each suggestion includes genre, mood, duration, and where to find the track.`
       setResult(formattedResult)
     } catch (error: any) {
-      setResult(`❌ Error generating music suggestions: ${error.message}\n\nThis might be because:\n• Invalid video description\n• OpenAI API quota exceeded\n• Network connection issues`)
+      setResult(`Error generating music suggestions: ${error.message}\n\nThis might be because:\n• Invalid video description\n• OpenAI API quota exceeded\n• Network connection issues`)
     } finally {
       setIsLoading(false)
       setActiveFeature('')
@@ -319,49 +319,49 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
       )}
       {!showVideoSelection && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-xl p-8 w-full max-w-4xl mx-4 max-h-[85vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-8">
+      <div className="bg-gray-900 rounded p-6 w-full max-w-4xl mx-4 max-h-[85vh] overflow-y-auto border border-gray-700/50">
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-2">AI-Powered Video Tools</h2>
-            <p className="text-gray-400 text-sm">Enhance your videos with intelligent automation</p>
+            <h2 className="text-lg font-medium text-gray-300 mb-1">AI-Powered Video Tools</h2>
+            <p className="text-gray-500 text-xs">Enhance your videos with intelligent automation</p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800 rounded-lg"
+            className="text-gray-400 hover:text-gray-300 transition-colors p-1.5 hover:bg-gray-800/50 rounded"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
           {/* Generate Captions */}
-          <div className="bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-500/30 rounded-xl p-6 hover:border-blue-400/50 transition-all group">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-gray-800/30 border border-gray-700/30 rounded p-3 hover:border-gray-600/50 transition-colors">
+            <div className="flex items-center mb-3">
+              <div className="w-8 h-8 bg-gray-700/50 rounded flex items-center justify-center mr-3">
+                <svg className="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-white font-semibold text-lg">Auto Captions</h3>
-                <p className="text-gray-400 text-sm">Generate subtitles from audio</p>
+                <h3 className="text-gray-300 font-medium text-sm">Auto Captions</h3>
+                <p className="text-gray-500 text-xs">Generate subtitles from audio</p>
               </div>
             </div>
             <button
               onClick={handleGenerateCaptions}
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+              className="w-full bg-gray-700/50 hover:bg-gray-600/50 disabled:bg-gray-700/30 text-gray-300 px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
             >
               {isLoading && activeFeature === 'captions' ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
                   <span>Generating...</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <span>Generate Captions</span>
@@ -371,31 +371,31 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Analyze Content */}
-          <div className="bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-500/30 rounded-xl p-6 hover:border-purple-400/50 transition-all group">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-gray-800/30 border border-gray-700/30 rounded p-3 hover:border-gray-600/50 transition-colors">
+            <div className="flex items-center mb-3">
+              <div className="w-8 h-8 bg-gray-700/50 rounded flex items-center justify-center mr-3">
+                <svg className="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-white font-semibold text-lg">Smart Analysis</h3>
-                <p className="text-gray-400 text-sm">Analyze video content & scenes</p>
+                <h3 className="text-gray-300 font-medium text-sm">Smart Analysis</h3>
+                <p className="text-gray-500 text-xs">Analyze video content & scenes</p>
               </div>
             </div>
             <button
               onClick={handleAnalyzeContent}
               disabled={isLoading}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+              className="w-full bg-gray-700/50 hover:bg-gray-600/50 disabled:bg-gray-700/30 text-gray-300 px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
             >
               {isLoading && activeFeature === 'analysis' ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
                   <span>Analyzing...</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <span>Analyze Content</span>
@@ -405,31 +405,31 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Generate Text Overlays */}
-          <div className="bg-gradient-to-br from-green-600/20 to-green-800/20 border border-green-500/30 rounded-xl p-6 hover:border-green-400/50 transition-all group">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-gray-800/30 border border-gray-700/30 rounded p-3 hover:border-gray-600/50 transition-colors">
+            <div className="flex items-center mb-3">
+              <div className="w-8 h-8 bg-gray-700/50 rounded flex items-center justify-center mr-3">
+                <svg className="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-white font-semibold text-lg">Text Overlays</h3>
-                <p className="text-gray-400 text-sm">Create dynamic text elements</p>
+                <h3 className="text-gray-300 font-medium text-sm">Text Overlays</h3>
+                <p className="text-gray-500 text-xs">Create dynamic text elements</p>
               </div>
             </div>
             <button
               onClick={handleGenerateTextOverlays}
               disabled={isLoading}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+              className="w-full bg-gray-700/50 hover:bg-gray-600/50 disabled:bg-gray-700/30 text-gray-300 px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
             >
               {isLoading && activeFeature === 'overlays' ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
                   <span>Creating...</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <span>Generate Overlays</span>
@@ -439,31 +439,31 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Color Correction */}
-          <div className="bg-gradient-to-br from-orange-600/20 to-orange-800/20 border border-orange-500/30 rounded-xl p-6 hover:border-orange-400/50 transition-all group">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-gray-800/30 border border-gray-700/30 rounded p-3 hover:border-gray-600/50 transition-colors">
+            <div className="flex items-center mb-3">
+              <div className="w-8 h-8 bg-gray-700/50 rounded flex items-center justify-center mr-3">
+                <svg className="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-white font-semibold text-lg">Color Correction</h3>
-                <p className="text-gray-400 text-sm">AI-powered color enhancement</p>
+                <h3 className="text-gray-300 font-medium text-sm">Color Correction</h3>
+                <p className="text-gray-500 text-xs">AI-powered color enhancement</p>
               </div>
             </div>
             <button
               onClick={handleSuggestColorCorrection}
               disabled={isLoading}
-              className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-orange-600/50 text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+              className="w-full bg-gray-700/50 hover:bg-gray-600/50 disabled:bg-gray-700/30 text-gray-300 px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
             >
               {isLoading && activeFeature === 'color' ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
                   <span>Processing...</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <span>Enhance Colors</span>
@@ -473,32 +473,32 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Export Settings */}
-          <div className="bg-gradient-to-br from-indigo-600/20 to-indigo-800/20 border border-indigo-500/30 rounded-xl p-6 hover:border-indigo-400/50 transition-all group">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-gray-800/30 border border-gray-700/30 rounded p-3 hover:border-gray-600/50 transition-colors">
+            <div className="flex items-center mb-3">
+              <div className="w-8 h-8 bg-gray-700/50 rounded flex items-center justify-center mr-3">
+                <svg className="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-white font-semibold text-lg">Export Settings</h3>
-                <p className="text-gray-400 text-sm">Optimize output quality</p>
+                <h3 className="text-gray-300 font-medium text-sm">Export Settings</h3>
+                <p className="text-gray-500 text-xs">Optimize output quality</p>
               </div>
             </div>
             <button
               onClick={handleSuggestExportSettings}
               disabled={isLoading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-600/50 text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+              className="w-full bg-gray-700/50 hover:bg-gray-600/50 disabled:bg-gray-700/30 text-gray-300 px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
             >
               {isLoading && activeFeature === 'export' ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
                   <span>Optimizing...</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <span>Optimize Export</span>
@@ -508,31 +508,31 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Music Suggestions */}
-          <div className="bg-gradient-to-br from-pink-600/20 to-pink-800/20 border border-pink-500/30 rounded-xl p-6 hover:border-pink-400/50 transition-all group">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-pink-600 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-gray-800/30 border border-gray-700/30 rounded p-3 hover:border-gray-600/50 transition-colors">
+            <div className="flex items-center mb-3">
+              <div className="w-8 h-8 bg-gray-700/50 rounded flex items-center justify-center mr-3">
+                <svg className="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-white font-semibold text-lg">Music Suggestions</h3>
-                <p className="text-gray-400 text-sm">Find perfect background music</p>
+                <h3 className="text-gray-300 font-medium text-sm">Music Suggestions</h3>
+                <p className="text-gray-500 text-xs">Find perfect background music</p>
               </div>
             </div>
             <button
               onClick={handleGenerateMusicSuggestions}
               disabled={isLoading}
-              className="w-full bg-pink-600 hover:bg-pink-700 disabled:bg-pink-600/50 text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+              className="w-full bg-gray-700/50 hover:bg-gray-600/50 disabled:bg-gray-700/30 text-gray-300 px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
             >
               {isLoading && activeFeature === 'music' ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
                   <span>Finding...</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <span>Find Music</span>
@@ -542,16 +542,16 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Audio Cleanup */}
-          <div className="bg-gradient-to-br from-teal-600/20 to-teal-800/20 border border-teal-500/30 rounded-xl p-6 hover:border-teal-400/50 transition-all group">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-teal-600 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-gray-800/30 border border-gray-700/30 rounded p-3 hover:border-gray-600/50 transition-colors">
+            <div className="flex items-center mb-3">
+              <div className="w-8 h-8 bg-gray-700/50 rounded flex items-center justify-center mr-3">
+                <svg className="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-white font-semibold text-lg">Audio Cleanup</h3>
-                <p className="text-gray-400 text-sm">AI-powered audio enhancement</p>
+                <h3 className="text-gray-300 font-medium text-sm">Audio Cleanup</h3>
+                <p className="text-gray-500 text-xs">AI-powered audio enhancement</p>
               </div>
             </div>
             <button
@@ -567,16 +567,16 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
                 }
               }}
               disabled={isLoading}
-              className="w-full bg-teal-600 hover:bg-teal-700 disabled:bg-teal-600/50 text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+              className="w-full bg-gray-700/50 hover:bg-gray-600/50 disabled:bg-gray-700/30 text-gray-300 px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
             >
               {isLoading && activeFeature === 'audio-cleanup' ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
                   <span>Enhancing...</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <span>Clean Audio</span>
@@ -586,16 +586,16 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Workflow Automation */}
-          <div className="bg-gradient-to-br from-cyan-600/20 to-cyan-800/20 border border-cyan-500/30 rounded-xl p-6 hover:border-cyan-400/50 transition-all group">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-cyan-600 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-gray-800/30 border border-gray-700/30 rounded p-3 hover:border-gray-600/50 transition-colors">
+            <div className="flex items-center mb-3">
+              <div className="w-8 h-8 bg-gray-700/50 rounded flex items-center justify-center mr-3">
+                <svg className="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-white font-semibold text-lg">Workflow Automation</h3>
-                <p className="text-gray-400 text-sm">Automate video editing workflow</p>
+                <h3 className="text-gray-300 font-medium text-sm">Workflow Automation</h3>
+                <p className="text-gray-500 text-xs">Automate video editing workflow</p>
               </div>
             </div>
             <button
@@ -611,16 +611,16 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
                 }
               }}
               disabled={isLoading}
-              className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-600/50 text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+              className="w-full bg-gray-700/50 hover:bg-gray-600/50 disabled:bg-gray-700/30 text-gray-300 px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
             >
               {isLoading && activeFeature === 'workflow' ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
                   <span>Planning...</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <span>Automate</span>
@@ -631,9 +631,9 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
         </div>
 
         {result && (
-          <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-semibold text-lg">Result</h3>
+          <div className="bg-gray-800/50 border border-gray-700 rounded p-3 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-gray-300 font-medium text-sm">Result</h3>
               <button
                 onClick={() => setResult('')}
                 className="text-gray-400 hover:text-white transition-colors"
@@ -643,7 +643,7 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
                 </svg>
               </button>
             </div>
-            <div className="bg-gray-900 rounded-lg p-4">
+            <div className="bg-gray-900 rounded p-2.5">
               <pre className="text-gray-300 text-sm whitespace-pre-wrap font-mono">{result}</pre>
             </div>
           </div>
