@@ -3,6 +3,7 @@ import * as path from 'path'
 import { ffmpegService } from './services/FFmpegService'
 import { recordingService } from './services/RecordingService'
 import { aiService } from './services/AIService'
+import { projectService } from './services/ProjectService'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -278,4 +279,101 @@ ipcMain.handle('enhanceAudioCleanup', async (event, audioOrVideoFilePath: string
 
 ipcMain.handle('automateWorkflow', async (event, videoFilePath: string, tasks: string[]) => {
   return await aiService.automateWorkflow(videoFilePath, tasks)
+})
+
+// Project Save/Load handlers
+ipcMain.handle('saveProject', async (event, { projectPath, projectData }) => {
+  try {
+    await projectService.saveProject(projectPath, projectData)
+    await projectService.addToRecentProjects(projectPath)
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error saving project:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+ipcMain.handle('loadProject', async (event, projectPath: string) => {
+  try {
+    const savedProject = await projectService.loadProject(projectPath)
+    projectService.setCurrentProjectPath(projectPath)
+    await projectService.addToRecentProjects(projectPath)
+    return { success: true, project: savedProject }
+  } catch (error: any) {
+    console.error('Error loading project:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+ipcMain.handle('showSaveProjectDialog', async () => {
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Save Project',
+    defaultPath: 'untitled.clipforge',
+    filters: [
+      { name: 'ClipForge Project', extensions: ['clipforge'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+  })
+  
+  if (!result.canceled && result.filePath) {
+    return result.filePath
+  }
+  return null
+})
+
+ipcMain.handle('showOpenProjectDialog', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Open Project',
+    properties: ['openFile'],
+    filters: [
+      { name: 'ClipForge Project', extensions: ['clipforge'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+  })
+  
+  if (!result.canceled && result.filePaths.length > 0) {
+    return result.filePaths[0]
+  }
+  return null
+})
+
+ipcMain.handle('getRecentProjects', async () => {
+  return await projectService.getRecentProjects()
+})
+
+ipcMain.handle('loadAutoSave', async () => {
+  const autoSave = await projectService.loadAutoSave()
+  if (autoSave) {
+    return { success: true, project: autoSave }
+  }
+  return { success: false }
+})
+
+ipcMain.handle('getCurrentProjectPath', async () => {
+  return projectService.getCurrentProjectPath()
+})
+
+ipcMain.handle('setCurrentProjectPath', async (event, projectPath: string | null) => {
+  projectService.setCurrentProjectPath(projectPath)
+})
+
+ipcMain.handle('startAutoSave', async (event, getProjectData: () => any) => {
+  // Since we can't pass functions through IPC, we'll handle auto-save differently
+  // The renderer will periodically call an auto-save endpoint
+  return { success: true }
+})
+
+ipcMain.handle('performAutoSave', async (event, projectData) => {
+  try {
+    await projectService.autoSave(projectData)
+    return { success: true }
+  } catch (error: any) {
+    console.error('Auto-save failed:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+ipcMain.handle('clearAutoSave', async () => {
+  await projectService.clearAutoSave()
+  return { success: true }
 })

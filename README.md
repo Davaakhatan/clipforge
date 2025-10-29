@@ -31,6 +31,8 @@ ClipForge is a professional desktop video editor inspired by CapCut, built for t
 - ✅ **Master Controls** - Global volume and mute for entire project
 
 ### 🎯 Professional Tools
+- ✅ **Project Save/Load** - Save and reopen projects (.clipforge format)
+- ✅ **Auto-Save** - Automatic project backup every 5 minutes with crash recovery
 - ✅ **Batch Operations** - Apply effects to multiple clips simultaneously
 - ✅ **Multi-select** - Ctrl/Cmd+click to select multiple clips
 - ✅ **Timeline Navigation** - Frame-perfect navigation and zoom presets
@@ -49,6 +51,14 @@ ClipForge is a professional desktop video editor inspired by CapCut, built for t
 - ✅ **Smart Video Selection** - Choose from media library or upload new videos for AI processing
 
 ## 🆕 Latest Updates
+
+### Project Management & Auto-Save System
+- **Save Projects**: Save your work as `.clipforge` project files for later editing
+- **Open Projects**: Reopen saved projects and continue where you left off
+- **Auto-Save**: Automatic backup every 5 minutes to protect your work
+- **Crash Recovery**: Restore your project automatically if the app crashes
+- **Unsaved Changes Indicator**: Visual indicator when your project has unsaved changes
+- **Recent Projects**: Quick access to recently opened projects
 
 ### Enter AI-Powered Tools with Smart Video Selection
 - **Intelligent Video Selection**: When using AI tools, choose from existing media library videos or upload new ones
@@ -115,6 +125,13 @@ The packaged app will be in `dist/` directory:
 
 ## 📖 Usage Guide
 
+### Project Management
+1. **New Project**: Click "New" button in header to start a fresh project
+2. **Save Project**: Click "Save" (or "Save *" if you have unsaved changes) to save your project as a `.clipforge` file
+3. **Open Project**: Click "Open" button to load a previously saved project
+4. **Auto-Save**: Projects are automatically saved every 5 minutes in the background
+5. **Crash Recovery**: If the app crashes, you'll be prompted to restore your auto-saved project on next launch
+
 ### Import Videos
 1. Click "Import Video" or drag & drop video files
 2. Videos appear in Media Library with thumbnails
@@ -153,7 +170,7 @@ The packaged app will be in `dist/` directory:
 
 ### AI-Powered Tools
 1. Click "AI Tools" button in header
-2. Select an AI feature (Captions, Analysis, Color Correction,,..., etc.)
+2. Select an AI feature (Captions, Analysis, Color Correction, etc.)
 3. If you have videos in your media library:
    - A dialog appears showing available videos
    - Choose a video from your library OR click "Upload New Video"
@@ -172,6 +189,9 @@ The packaged app will be in `dist/` directory:
 | `Cmd+Z` | Undo |
 | `Cmd+Shift+Z` | Redo |
 | `Delete` | Delete selected clip |
+| `Cmd+S` | Save Project (via Save button) |
+| `Cmd+O` | Open Project (via Open button) |
+| `Cmd+N` | New Project (via New button) |
 
 ## 🏗️ Architecture
 
@@ -224,7 +244,20 @@ src/
 - [x] Auto-minimize during recording
 - [x] Recording duration tracking
 
+### ✅ Project Management (Complete)
+- [x] Save projects to .clipforge format
+- [x] Load saved projects
+- [x] Auto-save every 5 minutes
+- [x] Crash recovery with auto-restore
+- [x] Unsaved changes tracking
+- [x] Recent projects history
+
 ### ⏳ Future Enhancements
+- [ ] Image/Photo import support
+- [ ] Export presets (YouTube, Instagram, TikTok)
+- [ ] Timeline snapping
+- [ ] Copy/paste clips
+- [ ] Video rotation and flip
 - [ ] Advanced audio controls
 - [ ] Transitions & effects
 - [ ] Multiple audio tracks

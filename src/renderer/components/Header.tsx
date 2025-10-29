@@ -8,7 +8,7 @@ interface ExportSettings {
 }
 
 const Header: React.FC = () => {
-  const { state, undo, redo, canUndo, canRedo } = useProject()
+  const { state, undo, redo, canUndo, canRedo, saveProject, loadProject, newProject, currentProjectPath, hasUnsavedChanges } = useProject()
   const [exporting, setExporting] = useState(false)
   const [exportProgress, setExportProgress] = useState(0)
   const [showExportDialog, setShowExportDialog] = useState(false)
@@ -97,6 +97,29 @@ const Header: React.FC = () => {
 
   const handleClose = () => {
     window.electronAPI?.ipc?.invoke('closeWindow')
+  }
+
+  const handleSave = async () => {
+    const result = await saveProject()
+    if (result.success) {
+      // Success - could show a toast notification
+    } else if (result.error && result.error !== 'No save path selected') {
+      alert(`Failed to save project: ${result.error}`)
+    }
+  }
+
+  const handleLoad = async () => {
+    const projectPath = await window.electronAPI?.showOpenProjectDialog()
+    if (projectPath) {
+      const result = await loadProject(projectPath)
+      if (!result.success) {
+        alert(`Failed to load project: ${result.error}`)
+      }
+    }
+  }
+
+  const handleNew = async () => {
+    await newProject()
   }
 
   return (
@@ -273,6 +296,32 @@ const Header: React.FC = () => {
           <span className="text-lg font-semibold">ClipForge</span>
           
           <div className="ml-8 flex items-center gap-2">
+            <button
+              onClick={handleNew}
+              className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded text-sm font-medium transition-colors"
+              title="New Project"
+            >
+              📄 New
+            </button>
+            <button
+              onClick={handleLoad}
+              className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded text-sm font-medium transition-colors"
+              title="Open Project"
+            >
+              📂 Open
+            </button>
+            <button
+              onClick={handleSave}
+              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                hasUnsavedChanges 
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                  : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+              }`}
+              title="Save Project"
+            >
+              {hasUnsavedChanges ? '💾 Save *' : '💾 Save'}
+            </button>
+            <div className="w-px h-6 bg-gray-700" />
             <button
               onClick={undo}
               disabled={!canUndo}

@@ -15,6 +15,17 @@ interface ElectronAPI {
   generateMusicSuggestions: (description: string, duration: number) => Promise<string[]>
   enhanceAudioCleanup: (audioOrVideoFilePath: string, options: any) => Promise<{ success: boolean; outputPath?: string; error?: string }>
   automateWorkflow: (videoFilePath: string, tasks: string[]) => Promise<{ success: boolean; results?: any[]; error?: string }>
+  // Project Save/Load methods
+  saveProject: (projectPath: string, projectData: any) => Promise<{ success: boolean; error?: string }>
+  loadProject: (projectPath: string) => Promise<{ success: boolean; project?: any; error?: string }>
+  showSaveProjectDialog: () => Promise<string | null>
+  showOpenProjectDialog: () => Promise<string | null>
+  getRecentProjects: () => Promise<Array<{ path: string; name: string; modified: string }>>
+  loadAutoSave: () => Promise<{ success: boolean; project?: any }>
+  getCurrentProjectPath: () => Promise<string | null>
+  setCurrentProjectPath: (projectPath: string | null) => Promise<void>
+  performAutoSave: (projectData: any) => Promise<{ success: boolean; error?: string }>
+  clearAutoSave: () => Promise<{ success: boolean }>
 }
 
 declare global {

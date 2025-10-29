@@ -3,6 +3,9 @@ import React, { createContext, useContext, useReducer, useCallback, useState, us
 // Helper to generate unique ID
 const generateId = () => Math.random().toString(36).substring(7)
 
+// Auto-save interval (5 minutes)
+const AUTO_SAVE_INTERVAL = 5 * 60 * 1000
+
 export interface TextOverlay {
   id: string
   text: string
@@ -762,6 +765,11 @@ interface ProjectContextType {
   canUndo: boolean
   canRedo: boolean
   saveHistory: () => void
+  saveProject: (projectPath?: string) => Promise<{ success: boolean; error?: string }>
+  loadProject: (projectPath: string) => Promise<{ success: boolean; error?: string }>
+  newProject: () => Promise<void>
+  currentProjectPath: string | null
+  hasUnsavedChanges: boolean
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined)
@@ -770,9 +778,12 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(projectReducer, initialState)
   const [history, setHistory] = useState<ProjectState[]>([initialState])
   const [historyIndex, setHistoryIndex] = useState(0)
+  const [currentProjectPath, setCurrentProjectPath] = useState<string | null>(null)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const isUpdatingRef = useRef(false)
   const isInitialMount = useRef(true)
   const skipHistoryUpdateRef = useRef(false)
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Track history changes - only save significant changes, not every tiny trim update
   useEffect(() => {
@@ -940,7 +951,159 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       setHistory(newHistory)
       setHistoryIndex(newHistory.length - 1)
     }
+    setHasUnsavedChanges(true)
   }, [state, history, historyIndex])
+
+  // Auto-save effect
+  useEffect(() => {
+    if (isInitialMount.current) {
+      // Check for auto-save on mount
+      window.electronAPI?.loadAutoSave().then((result: any) => {
+        if (result.success && result.project) {
+          const shouldRestore = confirm('An auto-saved project was found. Would you like to restore it?')
+          if (shouldRestore) {
+            loadProjectFromData(result.project)
+          } else {
+            window.electronAPI?.clearAutoSave()
+          }
+        }
+      })
+      isInitialMount.current = false
+    }
+
+    // Start auto-save timer
+    if (autoSaveTimerRef.current) {
+      clearInterval(autoSaveTimerRef.current)
+    }
+
+    autoSaveTimerRef.current = setInterval(async () => {
+      if (state.clips.length > 0 || state.audioClips.length > 0) {
+        try {
+          const projectData = {
+            tracks: state.tracks,
+            audioTracks: state.audioTracks,
+            clips: state.clips,
+            audioClips: state.audioClips,
+            masterVolume: state.masterVolume,
+            masterMute: state.masterMute,
+            zoom: state.zoom,
+          }
+          await window.electronAPI?.performAutoSave(projectData)
+        } catch (error) {
+          console.error('Auto-save failed:', error)
+        }
+      }
+    }, AUTO_SAVE_INTERVAL)
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearInterval(autoSaveTimerRef.current)
+      }
+    }
+  }, [state])
+
+  // Helper to load project data
+  const loadProjectFromData = useCallback((savedProject: any) => {
+    isUpdatingRef.current = true
+    
+    // Restore project state
+    const restoredState: ProjectState = {
+      tracks: savedProject.project.tracks || initialState.tracks,
+      audioTracks: savedProject.project.audioTracks || initialState.audioTracks,
+      clips: savedProject.project.clips || [],
+      audioClips: savedProject.project.audioClips || [],
+      masterVolume: savedProject.project.masterVolume ?? initialState.masterVolume,
+      masterMute: savedProject.project.masterMute ?? initialState.masterMute,
+      currentTime: 0,
+      isPlaying: false,
+      zoom: savedProject.project.zoom ?? initialState.zoom,
+      selectedClipId: null,
+      selectedClipIds: [],
+      isTextEditing: false,
+    }
+
+    dispatch({ type: 'SET_STATE', state: restoredState })
+    setHistory([restoredState])
+    setHistoryIndex(0)
+    setHasUnsavedChanges(false)
+    isUpdatingRef.current = false
+  }, [])
+
+  const saveProject = useCallback(async (projectPath?: string) => {
+    try {
+      let pathToUse = projectPath || currentProjectPath
+      
+      if (!pathToUse) {
+        pathToUse = await window.electronAPI?.showSaveProjectDialog()
+        if (!pathToUse) {
+          return { success: false, error: 'No save path selected' }
+        }
+      }
+
+      const projectData = {
+        tracks: state.tracks,
+        audioTracks: state.audioTracks,
+        clips: state.clips,
+        audioClips: state.audioClips,
+        masterVolume: state.masterVolume,
+        masterMute: state.masterMute,
+        zoom: state.zoom,
+      }
+
+      const result = await window.electronAPI?.saveProject(pathToUse, projectData)
+      
+      if (result?.success) {
+        setCurrentProjectPath(pathToUse)
+        setHasUnsavedChanges(false)
+        await window.electronAPI?.setCurrentProjectPath(pathToUse)
+        await window.electronAPI?.clearAutoSave()
+      }
+
+      return result || { success: false, error: 'Unknown error' }
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  }, [state, currentProjectPath])
+
+  const loadProject = useCallback(async (projectPath: string) => {
+    try {
+      const result = await window.electronAPI?.loadProject(projectPath)
+      
+      if (result?.success && result.project) {
+        loadProjectFromData(result.project)
+        setCurrentProjectPath(projectPath)
+        setHasUnsavedChanges(false)
+        await window.electronAPI?.setCurrentProjectPath(projectPath)
+      }
+
+      return result || { success: false, error: 'Unknown error' }
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  }, [loadProjectFromData])
+
+  const newProject = useCallback(async () => {
+    if (hasUnsavedChanges && state.clips.length > 0) {
+      const shouldSave = confirm('You have unsaved changes. Would you like to save before creating a new project?')
+      if (shouldSave) {
+        const saveResult = await saveProject()
+        if (!saveResult.success) {
+          return
+        }
+      }
+    }
+
+    isUpdatingRef.current = true
+    dispatch({ type: 'SET_STATE', state: initialState })
+    setHistory([initialState])
+    setHistoryIndex(0)
+    setCurrentProjectPath(null)
+    setHasUnsavedChanges(false)
+    isUpdatingRef.current = false
+    
+    await window.electronAPI?.setCurrentProjectPath(null)
+    await window.electronAPI?.clearAutoSave()
+  }, [hasUnsavedChanges, state, saveProject])
 
   return (
     <ProjectContext.Provider
@@ -994,6 +1157,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         canUndo: historyIndex > 0,
         canRedo: historyIndex < history.length - 1,
         saveHistory,
+        saveProject,
+        loadProject,
+        newProject,
+        currentProjectPath,
+        hasUnsavedChanges,
       }}
     >
       {children}
