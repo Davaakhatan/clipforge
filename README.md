@@ -39,8 +39,26 @@ ClipForge is a professional desktop video editor inspired by CapCut, built for t
 - ✅ **Video Effects** - Brightness, contrast, saturation adjustments
 - ✅ **Transitions** - Fade, slide, zoom, blur effects between clips
 - ✅ **Speed Control** - Variable playback speed (0.25x to 4x)
+- ✅ **AI-Powered Tools** - Smart video enhancement with OpenAI integration
+  - Auto Captions generation
+  - Content analysis and scene detection
+  - AI color correction suggestions
+  - Audio cleanup and enhancement
+  - Workflow automation
+  - Export settings optimization
+- ✅ **Smart Video Selection** - Choose from media library or upload new videos for AI processing
 
 ## 🆕 Latest Updates
+
+### Enter AI-Powered Tools with Smart Video Selection
+- **Intelligent Video Selection**: When using AI tools, choose from existing media library videos or upload new ones
+- **Media Library Integration**: AI tools automatically detect videos in your library and offer quick selection
+- **Auto Captions**: Generate subtitles automatically using OpenAI Whisper
+- **Smart Analysis**: AI-powered content analysis and scene detection
+- **Color Correction**: AI-suggested color enhancements based on video content
+- **Audio Enhancement**: Professional audio cleanup with noise reduction and normalization
+- **Workflow Automation**: AI-driven editing workflow suggestions
+- **Export Optimization**: AI-recommended export settings for best quality and file size
 
 ### Professional Audio Editing Suite
 - **Multi-track Audio System**: Complete audio editing with separate tracks
@@ -132,6 +150,16 @@ The packaged app will be in `dist/` directory:
 2. Choose save location
 3. Wait for export to complete
 4. Your video is ready!
+
+### AI-Powered Tools
+1. Click "AI Tools" button in header
+2. Select an AI feature (Captions, Analysis, Color Correction,,..., etc.)
+3. If you have videos in your media library:
+   - A dialog appears showing available videos
+   - Choose a video from your library OR click "Upload New Video"
+4. If no videos in library, file picker opens directly
+5. AI processes your video and displays results
+6. Apply suggestions or use generated content in your project
 
 ## ⌨️ Keyboard Shortcuts
 

@@ -1,65 +1,230 @@
 import React, { useState } from 'react'
+import { useProject } from '../context/ProjectContext'
 
 interface AIFeaturesProps {
   isOpen: boolean
   onClose: () => void
 }
 
+interface VideoSelectionDialogProps {
+  videos: Array<{ id: string; name: string; filePath: string; thumbnail?: string }>
+  onSelectFromLibrary: (filePath: string) => void
+  onUploadNew: () => void
+  onCancel: () => void
+}
+
+const VideoSelectionDialog: React.FC<VideoSelectionDialogProps> = ({
+  videos,
+  onSelectFromLibrary,
+  onUploadNew,
+  onCancel,
+}) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[100]">
+      <div className="bg-gray-900 rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto border border-gray-700">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold text-white">Select Video</h3>
+          <button
+            onClick={onCancel}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <p className="text-gray-400 text-sm mb-4">Choose from your media library or upload a new video</p>
+        
+        {videos.length > 0 && (
+          <div className="mb-6">
+            <h4 className="text-white font-semibold mb-3">Media Library</h4>
+            <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+              {videos.map((video) => (
+                <button
+                  key={video.id}
+                  onClick={() => onSelectFromLibrary(video.filePath)}
+                  className="bg-gray-800 hover:bg-gray-700 rounded-lg p-3 border border-gray-700 hover:border-accent transition-all text-left group"
+                >
+                  <div className="w-full h-24 bg-gray-900 rounded mb-2 overflow-hidden flex items-center justify-center">
+                    {video.thumbnail ? (
+                      <img src={video.thumbnail} alt={video.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </div>
+                  <p className="text-white text-sm truncate font-medium group-hover:text-accent">{video.name}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        <button
+          onClick={onUploadNew}
+          className="w-full bg-accent hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Upload New Video</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
+  const { state } = useProject()
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState('')
   const [activeFeature, setActiveFeature] = useState('')
+  const [showVideoSelection, setShowVideoSelection] = useState(false)
+  const [pendingAction, setPendingAction] = useState<string | null>(null)
+  
+  // Get available videos from media library (only video clips)
+  const availableVideos = state.clips.map(clip => ({
+    id: clip.id,
+    name: clip.name,
+    filePath: clip.filePath,
+    thumbnail: clip.thumbnail,
+  }))
 
-  const handleGenerateCaptions = async () => {
+  // Helper to process video file with the selected action
+  const processVideoFile = async (action: string, filePath: string) => {
     setIsLoading(true)
     setResult('')
-    setActiveFeature('captions')
+    setActiveFeature(action)
     
     try {
       if (!window.electronAPI) {
         throw new Error('AI API not available')
       }
 
-      // Open file picker for video/audio
-      const filePaths = await window.electronAPI.ipc.invoke('showOpenDialog')
-      if (!filePaths || filePaths.length === 0) {
-        setResult('❌ No file selected. Please select a video or audio file.')
-        setIsLoading(false)
-        setActiveFeature('')
-        return
+      switch (action) {
+        case 'captions':
+          const captions = await window.electronAPI.generateCaptions(filePath)
+          setResult(`🎤 AUTO-GENERATED CAPTIONS\n\n${captions.join('\n\n')}\n\n💡 These captions were generated using OpenAI's Whisper API and include timestamps for easy editing.`)
+          break
+        case 'color':
+          const suggestions = await window.electronAPI.suggestColorCorrection(filePath)
+          setResult(`🎨 AI COLOR CORRECTION SUGGESTIONS\n\nRecommended Adjustments:\n• Brightness: ${suggestions.brightness > 0 ? '+' : ''}${suggestions.brightness}\n• Contrast: ${suggestions.contrast > 0 ? '+' : ''}${suggestions.contrast}\n• Saturation: ${suggestions.saturation > 0 ? '+' : ''}${suggestions.saturation}\n• Temperature: ${suggestions.temperature > 0 ? '+' : ''}${suggestions.temperature}\n• Exposure: ${suggestions.exposure > 0 ? '+' : ''}${suggestions.exposure}\n• Shadows: ${suggestions.shadows > 0 ? '+' : ''}${suggestions.shadows}\n• Highlights: ${suggestions.highlights > 0 ? '+' : ''}${suggestions.highlights}\n\nReason: ${suggestions.reason}\nConfidence: ${Math.round((suggestions.confidence || 0.7) * 100)}%\nPreset: ${suggestions.preset}\n\n💡 These suggestions were generated using GPT-4 Vision analysis of your video frames for optimal color enhancement.`)
+          break
+        case 'analysis':
+          const analysis = await window.electronAPI.analyzeVideoContent(filePath)
+          setResult(`🔍 SMART CONTENT ANALYSIS\n\n${analysis.map((item: any, index: number) => 
+            `${index + 1}. [${item.timestamp}] ${item.type.toUpperCase()}\n   Description: ${item.description}\n   Confidence: ${Math.round((item.confidence || 0.8) * 100)}%\n   ${item.suggestions ? `Suggestions: ${item.suggestions}` : ''}`
+          ).join('\n\n')}\n\n💡 This analysis was generated using GPT-4 Vision to identify key moments, scene changes, and editing opportunities.`)
+          break
+        case 'audio-cleanup':
+          const audioResult = await window.electronAPI.enhanceAudioCleanup(filePath, {
+            noiseReduction: true,
+            normalize: true,
+            volumeBoost: 5
+          })
+          if (audioResult.success) {
+            setResult(`✅ Audio Enhanced Successfully!\n\nOutput saved to:\n${audioResult.outputPath}\n\nApplied enhancements:\n• Noise reduction\n• Normalization\n• Volume boost (+5dB)`)
+          } else {
+            setResult(`❌ Error: ${audioResult.error}`)
+          }
+          break
+        case 'workflow':
+          const workflowResult = await window.electronAPI.automateWorkflow(filePath, [
+            'add captions',
+            'color correct',
+            'add overlays',
+            'enhance audio'
+          ])
+          if (workflowResult.success && workflowResult.results) {
+            setResult(`🚀 AI WORKFLOW AUTOMATION\n\nSuggested Workflow Steps:\n\n${workflowResult.results.map((step: any, i: number) => 
+              `${i + 1}. ${step.action.toUpperCase()} (Priority: ${step.priority})\n   ${step.description}\n   Estimated time: ${step.estimatedTime}s${step.startTime ? `\n   Time range: ${step.startTime}s - ${step.endTime}s` : ''}`
+            ).join('\n\n')}`)
+          } else {
+            setResult(`❌ Error: ${workflowResult.error || 'Unknown error'}`)
+          }
+          break
       }
-
-      const captions = await window.electronAPI.generateCaptions(filePaths[0])
-      const formattedResult = `🎤 AUTO-GENERATED CAPTIONS\n\n${captions.join('\n\n')}\n\n💡 These captions were generated using OpenAI's Whisper API and include timestamps for easy editing.`
-      setResult(formattedResult)
     } catch (error: any) {
-      setResult(`❌ Error generating captions: ${error.message}\n\nThis might be because:\n• No audio file was selected\n• Audio file format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`)
+      const errorMessages: Record<string, string> = {
+        'captions': `❌ Error generating captions: ${error.message}\n\nThis might be because:\n• No audio file was selected\n• Audio file format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`,
+        'color': `❌ Error suggesting color correction: ${error.message}\n\nThis might be because:\n• No video file was selected\n• Video format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`,
+        'analysis': `❌ Error analyzing content: ${error.message}\n\nThis might be because:\n• No video file was selected\n• Video format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`,
+        'audio-cleanup': `❌ Error: ${error.message}`,
+        'workflow': `❌ Error: ${error.message}`
+      }
+      setResult(errorMessages[action] || `❌ Error: ${error.message}`)
     } finally {
       setIsLoading(false)
       setActiveFeature('')
     }
   }
 
-  const handleAnalyzeContent = async () => {
-    setIsLoading(true)
-    setResult('')
-    setActiveFeature('analysis')
+  // Handle selecting video from library
+  const handleSelectFromLibrary = async (filePath: string) => {
+    const action = pendingAction
+    setShowVideoSelection(false)
+    setPendingAction(null)
     
-    try {
-      if (!window.electronAPI) {
-        throw new Error('AI API not available')
-      }
-
-      const analysis = await window.electronAPI.analyzeVideoContent('/path/to/video.mp4')
-      const formattedResult = `🔍 SMART CONTENT ANALYSIS\n\n${analysis.map((item: any, index: number) => 
-        `${index + 1}. [${item.timestamp}] ${item.type.toUpperCase()}\n   Description: ${item.description}\n   Confidence: ${Math.round((item.confidence || 0.8) * 100)}%\n   ${item.suggestions ? `Suggestions: ${item.suggestions}` : ''}`
-      ).join('\n\n')}\n\n💡 This analysis was generated using GPT-4 Vision to identify key moments, scene changes, and editing opportunities.`
-      setResult(formattedResult)
-    } catch (error: any) {
-      setResult(`❌ Error analyzing content: ${error.message}\n\nThis might be because:\n• No video file was selected\n• Video format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`)
-    } finally {
+    if (action && filePath) {
+      await processVideoFile(action, filePath)
+    } else {
       setIsLoading(false)
       setActiveFeature('')
+      setResult('')
+    }
+  }
+
+  // Handle uploading new video
+  const handleUploadNew = async () => {
+    const action = pendingAction
+    setShowVideoSelection(false)
+    setPendingAction(null)
+    
+    if (!window.electronAPI) {
+      setResult('❌ AI API not available')
+      return
+    }
+    
+    const filePaths = await window.electronAPI.ipc.invoke('showOpenDialog')
+    if (filePaths && filePaths.length > 0 && action) {
+      await processVideoFile(action, filePaths[0])
+    } else {
+      setIsLoading(false)
+      setActiveFeature('')
+      setResult('')
+    }
+  }
+
+  // Handle canceling video selection
+  const handleCancelSelection = () => {
+    setShowVideoSelection(false)
+    setPendingAction(null)
+    setIsLoading(false)
+    setActiveFeature('')
+  }
+
+  const handleGenerateCaptions = async () => {
+    if (availableVideos.length > 0) {
+      setPendingAction('captions')
+      setShowVideoSelection(true)
+    } else {
+      const filePaths = await window.electronAPI?.ipc?.invoke('showOpenDialog')
+      if (filePaths && filePaths.length > 0) {
+        await processVideoFile('captions', filePaths[0])
+      }
+    }
+  }
+
+  const handleAnalyzeContent = async () => {
+    if (availableVideos.length > 0) {
+      setPendingAction('analysis')
+      setShowVideoSelection(true)
+    } else {
+      const filePaths = await window.electronAPI?.ipc?.invoke('showOpenDialog')
+      if (filePaths && filePaths.length > 0) {
+        await processVideoFile('analysis', filePaths[0])
+      }
     }
   }
 
@@ -87,32 +252,14 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
   }
 
   const handleSuggestColorCorrection = async () => {
-    setIsLoading(true)
-    setResult('')
-    setActiveFeature('color')
-    
-    try {
-      if (!window.electronAPI) {
-        throw new Error('AI API not available')
+    if (availableVideos.length > 0) {
+      setPendingAction('color')
+      setShowVideoSelection(true)
+    } else {
+      const filePaths = await window.electronAPI?.ipc?.invoke('showOpenDialog')
+      if (filePaths && filePaths.length > 0) {
+        await processVideoFile('color', filePaths[0])
       }
-
-      // Open file picker for video
-      const filePaths = await window.electronAPI.ipc.invoke('showOpenDialog')
-      if (!filePaths || filePaths.length === 0) {
-        setResult('❌ No file selected. Please select a video file.')
-        setIsLoading(false)
-        setActiveFeature('')
-        return
-      }
-
-      const suggestions = await window.electronAPI.suggestColorCorrection(filePaths[0])
-      const formattedResult = `🎨 AI COLOR CORRECTION SUGGESTIONS\n\nRecommended Adjustments:\n• Brightness: ${suggestions.brightness > 0 ? '+' : ''}${suggestions.brightness}\n• Contrast: ${suggestions.contrast > 0 ? '+' : ''}${suggestions.contrast}\n• Saturation: ${suggestions.saturation > 0 ? '+' : ''}${suggestions.saturation}\n• Temperature: ${suggestions.temperature > 0 ? '+' : ''}${suggestions.temperature}\n• Exposure: ${suggestions.exposure > 0 ? '+' : ''}${suggestions.exposure}\n• Shadows: ${suggestions.shadows > 0 ? '+' : ''}${suggestions.shadows}\n• Highlights: ${suggestions.highlights > 0 ? '+' : ''}${suggestions.highlights}\n\nReason: ${suggestions.reason}\nConfidence: ${Math.round((suggestions.confidence || 0.7) * 100)}%\nPreset: ${suggestions.preset}\n\n💡 These suggestions were generated using GPT-4 Vision analysis of your video frames for optimal color enhancement.`
-      setResult(formattedResult)
-    } catch (error: any) {
-      setResult(`❌ Error suggesting color correction: ${error.message}\n\nThis might be because:\n• No video file was selected\n• Video format is not supported\n• OpenAI API quota exceeded\n• Network connection issues`)
-    } finally {
-      setIsLoading(false)
-      setActiveFeature('')
     }
   }
 
@@ -161,7 +308,17 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <>
+      {showVideoSelection && (
+        <VideoSelectionDialog
+          videos={availableVideos}
+          onSelectFromLibrary={handleSelectFromLibrary}
+          onUploadNew={handleUploadNew}
+          onCancel={handleCancelSelection}
+        />
+      )}
+      {!showVideoSelection && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-gray-900 rounded-xl p-8 w-full max-w-4xl mx-4 max-h-[85vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -399,33 +556,14 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
             </div>
             <button
               onClick={async () => {
-                setIsLoading(true)
-                setResult('')
-                setActiveFeature('audio-cleanup')
-                try {
-                  if (!window.electronAPI) throw new Error('AI API not available')
-                  const filePaths = await window.electronAPI.ipc.invoke('showOpenDialog')
-                  if (!filePaths || filePaths.length === 0) {
-                    setResult('❌ No file selected.')
-                    setIsLoading(false)
-                    setActiveFeature('')
-                    return
+                if (availableVideos.length > 0) {
+                  setPendingAction('audio-cleanup')
+                  setShowVideoSelection(true)
+                } else {
+                  const filePaths = await window.electronAPI?.ipc?.invoke('showOpenDialog')
+                  if (filePaths && filePaths.length > 0) {
+                    await processVideoFile('audio-cleanup', filePaths[0])
                   }
-                  const result = await window.electronAPI.enhanceAudioCleanup(filePaths[0], {
-                    noiseReduction: true,
-                    normalize: true,
-                    volumeBoost: 5
-                  })
-                  if (result.success) {
-                    setResult(`✅ Audio Enhanced Successfully!\n\nOutput saved to:\n${result.outputPath}\n\nApplied enhancements:\n• Noise reduction\n• Normalization\n• Volume boost (+5dB)`)
-                  } else {
-                    setResult(`❌ Error: ${result.error}`)
-                  }
-                } catch (error: any) {
-                  setResult(`❌ Error: ${error.message}`)
-                } finally {
-                  setIsLoading(false)
-                  setActiveFeature('')
                 }
               }}
               disabled={isLoading}
@@ -462,37 +600,14 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
             </div>
             <button
               onClick={async () => {
-                setIsLoading(true)
-                setResult('')
-                setActiveFeature('workflow')
-                try {
-                  if (!window.electronAPI) throw new Error('AI API not available')
-                  const filePaths = await window.electronAPI.ipc.invoke('showOpenDialog')
-                  if (!filePaths || filePaths.length === 0) {
-                    setResult('❌ No file selected.')
-                    setIsLoading(false)
-                    setActiveFeature('')
-                    return
+                if (availableVideos.length > 0) {
+                  setPendingAction('workflow')
+                  setShowVideoSelection(true)
+                } else {
+                  const filePaths = await window.electronAPI?.ipc?.invoke('showOpenDialog')
+                  if (filePaths && filePaths.length > 0) {
+                    await processVideoFile('workflow', filePaths[0])
                   }
-                  const result = await window.electronAPI.automateWorkflow(filePaths[0], [
-                    'add captions',
-                    'color correct',
-                    'add overlays',
-                    'enhance audio'
-                  ])
-                  if (result.success && result.results) {
-                    const formatted = `🚀 AI WORKFLOW AUTOMATION\n\nSuggested Workflow Steps:\n\n${result.results.map((step: any, i: number) => 
-                      `${i + 1}. ${step.action.toUpperCase()} (Priority: ${step.priority})\n   ${step.description}\n   Estimated time: ${step.estimatedTime}s${step.startTime ? `\n   Time range: ${step.startTime}s - ${step.endTime}s` : ''}`
-                    ).join('\n\n')}`
-                    setResult(formatted)
-                  } else {
-                    setResult(`❌ Error: ${result.error || 'Unknown error'}`)
-                  }
-                } catch (error: any) {
-                  setResult(`❌ Error: ${error.message}`)
-                } finally {
-                  setIsLoading(false)
-                  setActiveFeature('')
                 }
               }}
               disabled={isLoading}
@@ -543,6 +658,8 @@ export const AIFeatures: React.FC<AIFeaturesProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+      )}
+    </>
   )
 }
