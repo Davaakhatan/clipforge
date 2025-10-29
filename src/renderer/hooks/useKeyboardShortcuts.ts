@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react'
 import { useProject } from '../context/ProjectContext'
 
 export function useKeyboardShortcuts() {
-  const { state, setCurrentTime, setPlaying, removeClip, removeAudioClip, splitClip, splitAudioClip, duplicateAudioClip, undo, redo, canUndo, canRedo } = useProject()
+  const { state, setCurrentTime, setPlaying, removeClip, removeAudioClip, splitClip, splitAudioClip, duplicateAudioClip, undo, redo, canUndo, canRedo, copyClip, pasteClip, copyAudioClip, pasteAudioClip } = useProject()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -82,6 +82,31 @@ export function useKeyboardShortcuts() {
         return
       }
 
+      // Ctrl/Cmd + C: Copy selected clip
+      if ((e.ctrlKey || e.metaKey) && e.code === 'KeyC') {
+        e.preventDefault()
+        if (state.selectedClipId) {
+          // Check if it's a video clip or audio clip
+          const isVideoClip = state.tracks.some(track => track.clips.some(clip => clip.id === state.selectedClipId))
+          const isAudioClip = state.audioTracks.some(track => track.clips.some(clip => clip.id === state.selectedClipId))
+          
+          if (isVideoClip) {
+            copyClip(state.selectedClipId)
+          } else if (isAudioClip) {
+            copyAudioClip(state.selectedClipId)
+          }
+        }
+        return
+      }
+
+      // Ctrl/Cmd + V: Paste clip at playhead
+      if ((e.ctrlKey || e.metaKey) && e.code === 'KeyV') {
+        e.preventDefault()
+        pasteClip()
+        pasteAudioClip()
+        return
+      }
+
       // S: Split clip at playhead
       if (e.code === 'KeyS' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault()
@@ -120,6 +145,6 @@ export function useKeyboardShortcuts() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [state.isPlaying, state.currentTime, state.tracks, state.audioTracks, state.selectedClipId, state.isTextEditing, setPlaying, setCurrentTime, splitClip, splitAudioClip, removeClip, removeAudioClip, duplicateAudioClip, undo, redo, canUndo, canRedo])
+  }, [state.isPlaying, state.currentTime, state.tracks, state.audioTracks, state.selectedClipId, state.isTextEditing, setPlaying, setCurrentTime, splitClip, splitAudioClip, removeClip, removeAudioClip, duplicateAudioClip, undo, redo, canUndo, canRedo, copyClip, pasteClip, copyAudioClip, pasteAudioClip])
 }
 

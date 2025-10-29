@@ -7,6 +7,26 @@ interface ExportSettings {
   format: 'mp4' | 'mov'
 }
 
+interface ExportPreset {
+  name: string
+  settings: ExportSettings
+}
+
+const EXPORT_PRESETS: ExportPreset[] = [
+  {
+    name: 'YouTube',
+    settings: { quality: 'high', resolution: '1080p', format: 'mp4' }
+  },
+  {
+    name: 'Instagram',
+    settings: { quality: 'high', resolution: '1080p', format: 'mp4' }
+  },
+  {
+    name: 'TikTok',
+    settings: { quality: 'high', resolution: '1080p', format: 'mp4' }
+  }
+]
+
 const Header: React.FC = () => {
   const { state, undo, redo, canUndo, canRedo, saveProject, loadProject, newProject, currentProjectPath, hasUnsavedChanges } = useProject()
   const [exporting, setExporting] = useState(false)
@@ -58,6 +78,9 @@ const Header: React.FC = () => {
           brightness: clip.brightness || 0,
           contrast: clip.contrast || 0,
           saturation: clip.saturation || 0,
+          rotation: clip.rotation || 0,
+          flipHorizontal: clip.flipHorizontal || false,
+          flipVertical: clip.flipVertical || false,
           fadeIn: clip.fadeIn || 0,
           fadeOut: clip.fadeOut || 0,
           transitionIn: clip.transitionIn,
@@ -190,6 +213,34 @@ const Header: React.FC = () => {
                 </div>
               </div>
 
+              {/* Export Presets */}
+              <div>
+                <label className="text-sm font-bold text-gray-300 mb-3 block flex items-center gap-2">
+                  <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  Quick Presets
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {EXPORT_PRESETS.map(preset => (
+                    <button
+                      key={preset.name}
+                      onClick={() => setExportSettings(preset.settings)}
+                      className={`px-4 py-3 rounded-xl border-2 transition-all ${
+                        exportSettings.quality === preset.settings.quality &&
+                        exportSettings.resolution === preset.settings.resolution &&
+                        exportSettings.format === preset.settings.format
+                          ? 'border-yellow-500 bg-yellow-500/10 text-white'
+                          : 'border-gray-700 bg-gray-800/80 text-gray-400 hover:border-gray-600'
+                      }`}
+                    >
+                      <div className="font-bold">{preset.name}</div>
+                      <div className="text-xs opacity-75 mt-1">{preset.settings.resolution}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Format */}
               <div>
                 <label className="text-sm font-bold text-gray-300 mb-3 block flex items-center gap-2">
@@ -288,83 +339,104 @@ const Header: React.FC = () => {
       )}
 
       {/* Header */}
-      <div className="h-12 bg-dark border-b border-gray-800 flex items-center justify-between pl-4 pr-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-accent rounded flex items-center justify-center text-white font-bold">
-            CF
+      <div className="h-10 bg-dark border-b border-gray-800/50 flex items-center justify-between px-3">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-accent rounded flex items-center justify-center text-white text-xs font-semibold">
+              CF
+            </div>
+            <span className="text-sm font-medium text-gray-300">ClipForge</span>
           </div>
-          <span className="text-lg font-semibold">ClipForge</span>
           
-          <div className="ml-8 flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={handleNew}
-              className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded text-sm font-medium transition-colors"
-              title="New Project"
+              className="px-2 py-1 bg-gray-800/30 hover:bg-gray-700/50 rounded text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 border border-gray-700/30"
+              title="New Project (Cmd/Ctrl+N)"
             >
-              📄 New
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>New</span>
             </button>
             <button
               onClick={handleLoad}
-              className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded text-sm font-medium transition-colors"
-              title="Open Project"
+              className="px-2 py-1 bg-gray-800/30 hover:bg-gray-700/50 rounded text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 border border-gray-700/30"
+              title="Open Project (Cmd/Ctrl+O)"
             >
-              📂 Open
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
+              <span>Open</span>
             </button>
             <button
               onClick={handleSave}
-              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+              className={`px-2 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border ${
                 hasUnsavedChanges 
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                  : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                  ? 'bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/50 text-blue-400' 
+                  : 'bg-gray-800/30 hover:bg-gray-700/50 border-gray-700/30 text-gray-400 hover:text-white'
               }`}
-              title="Save Project"
+              title="Save Project (Cmd/Ctrl+S)"
             >
-              {hasUnsavedChanges ? '💾 Save *' : '💾 Save'}
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+              <span>{hasUnsavedChanges ? 'Save *' : 'Save'}</span>
             </button>
-            <div className="w-px h-6 bg-gray-700" />
+          </div>
+
+          <div className="w-px h-4 bg-gray-700/50" />
+          
+          <div className="flex items-center gap-1">
             <button
               onClick={undo}
               disabled={!canUndo}
-              className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm font-medium transition-colors"
-              title="Undo (Cmd/Ctrl + Z)"
+              className="px-2 py-1 bg-gray-800/30 hover:bg-gray-700/50 disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs text-gray-400 hover:text-white transition-colors border border-gray-700/30"
+              title="Undo (Cmd/Ctrl+Z)"
             >
-              ↶ Undo
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              </svg>
             </button>
             <button
               onClick={redo}
               disabled={!canRedo}
-              className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm font-medium transition-colors"
-              title="Redo (Cmd/Ctrl + Shift + Z)"
+              className="px-2 py-1 bg-gray-800/30 hover:bg-gray-700/50 disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs text-gray-400 hover:text-white transition-colors border border-gray-700/30"
+              title="Redo (Cmd/Ctrl+Shift+Z)"
             >
-              ↷ Redo
-            </button>
-            <div className="w-px h-6 bg-gray-700" />
-            <button
-              onClick={handleExportClick}
-              disabled={exporting || state.clips.length === 0}
-              className="px-4 py-1.5 bg-accent hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm font-medium transition-colors"
-            >
-              Export Video
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8-8v2m8 8l-6-6m6 6l-6 6" />
+              </svg>
             </button>
           </div>
+
+          <div className="w-px h-4 bg-gray-700/50" />
+          
+          <button
+            onClick={handleExportClick}
+            disabled={exporting || state.clips.length === 0}
+            className="px-2.5 py-1 bg-accent/90 hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs font-medium text-white transition-colors"
+          >
+            Export
+          </button>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center">
           <button
             onClick={handleMinimize}
-            className="w-12 h-8 flex items-center justify-center hover:bg-gray-800 rounded transition-colors"
+            className="w-8 h-8 flex items-center justify-center hover:bg-gray-800/50 rounded transition-colors text-gray-400 hover:text-white"
             aria-label="Minimize"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
             </svg>
           </button>
           <button
             onClick={handleMaximize}
-            className="w-12 h-8 flex items-center justify-center hover:bg-gray-800 rounded transition-colors"
+            className="w-8 h-8 flex items-center justify-center hover:bg-gray-800/50 rounded transition-colors text-gray-400 hover:text-white"
             aria-label="Maximize"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -375,10 +447,10 @@ const Header: React.FC = () => {
           </button>
           <button
             onClick={handleClose}
-            className="w-12 h-8 flex items-center justify-center hover:bg-red-600 rounded transition-colors"
+            className="w-8 h-8 flex items-center justify-center hover:bg-red-500/20 rounded transition-colors text-gray-400 hover:text-red-400"
             aria-label="Close"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"

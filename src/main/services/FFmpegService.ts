@@ -341,6 +341,12 @@ class FFmpegService {
       duration: number
       startTime: number
       endTime: number
+      rotation?: number
+      flipHorizontal?: boolean
+      flipVertical?: boolean
+      brightness?: number
+      contrast?: number
+      saturation?: number
     }>,
     outputPath: string,
     onProgress?: (progress: number) => void
@@ -359,10 +365,59 @@ class FFmpegService {
           const startSec = clip.startTime / 1000
           const durationSec = clip.duration / 1000
           
-          ffmpeg(clip.filePath)
+          // Build video filter string for rotation, flip, and effects
+          const filters: string[] = []
+          
+          // Rotation (transpose based on angle)
+          if (clip.rotation) {
+            switch (clip.rotation) {
+              case 90:
+                filters.push('transpose=1') // 90° clockwise
+                break
+              case 180:
+                filters.push('transpose=2,transpose=2') // 180°
+                break
+              case 270:
+                filters.push('transpose=2') // 270° clockwise (90° counter-clockwise)
+                break
+            }
+          }
+          
+          // Horizontal flip
+          if (clip.flipHorizontal) {
+            filters.push('hflip')
+          }
+          
+          // Vertical flip
+          if (clip.flipVertical) {
+            filters.push('vflip')
+          }
+          
+          // Brightness, contrast, saturation
+          const brightness = clip.brightness || 0
+          const contrast = clip.contrast || 0
+          const saturation = clip.saturation || 0
+          
+          if (brightness !== 0 || contrast !== 0 || saturation !== 0) {
+            const brightnessValue = 1 + (brightness / 100)
+            const contrastValue = 1 + (contrast / 100)
+            const saturationValue = 1 + (saturation / 100)
+            filters.push(`eq=brightness=${brightnessValue}:contrast=${contrastValue}:saturation=${saturationValue}`)
+          }
+          
+          let command = ffmpeg(clip.filePath)
             .seekInput(startSec)
             .duration(durationSec)
-            .outputOptions(['-c:v copy', '-c:a copy']) // Copy codecs for speed
+          
+          // Apply filters if any
+          if (filters.length > 0) {
+            command = command.videoFilters(filters.join(','))
+            command = command.outputOptions(['-c:a copy']) // Copy audio codec
+          } else {
+            command = command.outputOptions(['-c:v copy', '-c:a copy']) // Copy codecs for speed
+          }
+          
+          command
             .output(trimmedPath)
             .on('end', () => resolve())
             .on('error', (err) => reject(err))

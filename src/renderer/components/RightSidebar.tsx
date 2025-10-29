@@ -373,6 +373,83 @@ const RightSidebar: React.FC = () => {
               </div>
             </div>
 
+            {/* Rotation & Flip */}
+            <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-xl p-4 border border-indigo-500/20 backdrop-blur-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </div>
+                <label className="text-xs font-bold text-white uppercase tracking-wider">Rotation & Flip</label>
+              </div>
+              
+              {/* Rotation */}
+              <div className="mb-4">
+                <label className="text-xs font-semibold text-gray-400 mb-2 block flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full"></span>
+                  Rotation
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[0, 90, 180, 270].map(angle => (
+                    <button
+                      key={angle}
+                      onClick={() => {
+                        updateClip(selectedClip.id, { rotation: angle })
+                        saveHistory()
+                      }}
+                      className={`px-3 py-2 rounded-lg border-2 transition-all text-xs font-bold ${
+                        (selectedClip.rotation || 0) === angle
+                          ? 'border-indigo-500 bg-indigo-500/20 text-white'
+                          : 'border-gray-700 bg-gray-800/80 text-gray-400 hover:border-gray-600'
+                      }`}
+                      title={`Rotate ${angle}°`}
+                    >
+                      {angle}°
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Flip Controls */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    updateClip(selectedClip.id, { flipHorizontal: !selectedClip.flipHorizontal })
+                    saveHistory()
+                  }}
+                  className={`px-4 py-3 rounded-lg border-2 transition-all text-xs font-bold flex items-center justify-center gap-2 ${
+                    selectedClip.flipHorizontal
+                      ? 'border-indigo-500 bg-indigo-500/20 text-white'
+                      : 'border-gray-700 bg-gray-800/80 text-gray-400 hover:border-gray-600'
+                  }`}
+                  title="Flip Horizontal (Mirror)"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                  Flip H
+                </button>
+                <button
+                  onClick={() => {
+                    updateClip(selectedClip.id, { flipVertical: !selectedClip.flipVertical })
+                    saveHistory()
+                  }}
+                  className={`px-4 py-3 rounded-lg border-2 transition-all text-xs font-bold flex items-center justify-center gap-2 ${
+                    selectedClip.flipVertical
+                      ? 'border-indigo-500 bg-indigo-500/20 text-white'
+                      : 'border-gray-700 bg-gray-800/80 text-gray-400 hover:border-gray-600'
+                  }`}
+                  title="Flip Vertical"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
+                  Flip V
+                </button>
+              </div>
+            </div>
+
             {/* Transitions */}
             <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-xl p-4 border border-purple-500/20 backdrop-blur-sm">
               <div className="flex items-center gap-2 mb-4">

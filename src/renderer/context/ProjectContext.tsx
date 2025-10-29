@@ -43,6 +43,10 @@ export interface Clip {
   brightness?: number // -100 to 100 (default: 0)
   contrast?: number // -100 to 100 (default: 0)
   saturation?: number // -100 to 100 (default: 0)
+  // Rotation and flip
+  rotation?: number // 0, 90, 180, 270 degrees (default: 0)
+  flipHorizontal?: boolean // Horizontal flip (default: false)
+  flipVertical?: boolean // Vertical flip (default: false)
 }
 
 export interface TimelineTrack {
@@ -770,6 +774,12 @@ interface ProjectContextType {
   newProject: () => Promise<void>
   currentProjectPath: string | null
   hasUnsavedChanges: boolean
+  copyClip: (clipId: string) => void
+  pasteClip: () => void
+  copyAudioClip: (clipId: string) => void
+  pasteAudioClip: () => void
+  hasCopiedClip: boolean
+  hasCopiedAudioClip: boolean
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined)
@@ -780,6 +790,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [historyIndex, setHistoryIndex] = useState(0)
   const [currentProjectPath, setCurrentProjectPath] = useState<string | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [copiedClip, setCopiedClip] = useState<Clip | null>(null)
+  const [copiedAudioClip, setCopiedAudioClip] = useState<AudioClip | null>(null)
   const isUpdatingRef = useRef(false)
   const isInitialMount = useRef(true)
   const skipHistoryUpdateRef = useRef(false)
@@ -1105,6 +1117,46 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     await window.electronAPI?.clearAutoSave()
   }, [hasUnsavedChanges, state, saveProject])
 
+  const copyClip = useCallback((clipId: string) => {
+    const clip = state.clips.find(c => c.id === clipId)
+    if (clip) {
+      setCopiedClip(clip)
+      setCopiedAudioClip(null) // Clear audio clip copy
+    }
+  }, [state.clips])
+
+  const pasteClip = useCallback(() => {
+    if (!copiedClip) return
+    
+    const newClip: Clip = {
+      ...copiedClip,
+      id: Math.random().toString(36).substring(7),
+      offset: state.currentTime, // Paste at playhead position
+    }
+    addClip(newClip)
+    saveHistory()
+  }, [copiedClip, state.currentTime, addClip, saveHistory])
+
+  const copyAudioClip = useCallback((clipId: string) => {
+    const clip = state.audioClips.find(c => c.id === clipId)
+    if (clip) {
+      setCopiedAudioClip(clip)
+      setCopiedClip(null) // Clear video clip copy
+    }
+  }, [state.audioClips])
+
+  const pasteAudioClip = useCallback(() => {
+    if (!copiedAudioClip) return
+    
+    const newClip: AudioClip = {
+      ...copiedAudioClip,
+      id: Math.random().toString(36).substring(7),
+      offset: state.currentTime, // Paste at playhead position
+    }
+    addAudioClip(newClip)
+    saveHistory()
+  }, [copiedAudioClip, state.currentTime, addAudioClip, saveHistory])
+
   return (
     <ProjectContext.Provider
       value={{
@@ -1162,6 +1214,12 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         newProject,
         currentProjectPath,
         hasUnsavedChanges,
+        copyClip,
+        pasteClip,
+        copyAudioClip,
+        pasteAudioClip,
+        hasCopiedClip: copiedClip !== null,
+        hasCopiedAudioClip: copiedAudioClip !== null,
       }}
     >
       {children}

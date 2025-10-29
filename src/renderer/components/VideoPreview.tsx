@@ -453,6 +453,33 @@ const VideoPreview: React.FC = () => {
 
   const videoFilter = getVideoFilter()
 
+  // Get transform for rotation and flip
+  const getRotationTransform = () => {
+    if (!currentClip) return 'none'
+    
+    const transforms: string[] = []
+    
+    // Rotation
+    const rotation = currentClip.rotation || 0
+    if (rotation !== 0) {
+      transforms.push(`rotate(${rotation}deg)`)
+    }
+    
+    // Horizontal flip
+    if (currentClip.flipHorizontal) {
+      transforms.push('scaleX(-1)')
+    }
+    
+    // Vertical flip
+    if (currentClip.flipVertical) {
+      transforms.push('scaleY(-1)')
+    }
+    
+    return transforms.join(' ') || 'none'
+  }
+
+  const rotationTransform = getRotationTransform()
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDraggingOver(false)
@@ -511,9 +538,13 @@ const VideoPreview: React.FC = () => {
               controls={false}
               muted={currentClip.muted || false}
               playsInline={true}
-              style={{ 
+              style={{
                 opacity: transitionEffects.opacity !== 1 ? transitionEffects.opacity : fadeOpacity,
-                transform: transitionEffects.transform !== 'none' ? transitionEffects.transform : (transitionEffects.scale !== 1 ? `scale(${transitionEffects.scale})` : 'none'),
+                transform: [
+                  rotationTransform !== 'none' ? rotationTransform : '',
+                  transitionEffects.transform !== 'none' ? transitionEffects.transform : '',
+                  transitionEffects.scale !== 1 ? `scale(${transitionEffects.scale})` : ''
+                ].filter(t => t).join(' ') || 'none',
                 filter: transitionEffects.filter !== 'none' ? transitionEffects.filter : videoFilter,
                 transition: 'opacity 0.1s linear, transform 0.1s linear, filter 0.1s linear',
               }}

@@ -12,6 +12,8 @@ const Timeline: React.FC = () => {
   const [isResizingClip, setIsResizingClip] = useState<'left' | 'right' | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, startTime: 0 })
   const [trimFeedback, setTrimFeedback] = useState<{ side: 'left' | 'right' | null, clipId: string | null, newDuration: number }>({ side: null, clipId: null, newDuration: 0 })
+  const [snappingEnabled, setSnappingEnabled] = useState(true)
+  const [snapTarget, setSnapTarget] = useState<{ time: number; type: 'playhead' | 'clip-start' | 'clip-end' } | null>(null)
   
   const timelineContainerRef = useRef<HTMLDivElement>(null)
   const rulerRef = useRef<HTMLDivElement>(null)
@@ -70,7 +72,59 @@ const Timeline: React.FC = () => {
   const timeToPx = (time: number) => time * pixelsPerSecond
   const pxToTime = (px: number) => px / pixelsPerSecond
 
-  // Snap to grid
+  // Enhanced snapping function with magnetic snap to playhead and clip edges
+  const snapToPosition = (time: number, excludeClipId?: string): { snappedTime: number; target: { time: number; type: 'playhead' | 'clip-start' | 'clip-end' } | null } => {
+    if (!snappingEnabled) {
+      // Still snap to grid when snapping is off
+      const gridInterval = 1000
+      return { snappedTime: Math.round(time / gridInterval) * gridInterval, target: null }
+    }
+
+    const SNAP_THRESHOLD = 100 // 100ms threshold for snapping
+    const snapTargets: Array<{ time: number; type: 'playhead' | 'clip-start' | 'clip-end' }> = []
+
+    // Add playhead as snap target
+    snapTargets.push({ time: state.currentTime, type: 'playhead' })
+
+    // Add clip edges as snap targets
+    state.clips.forEach(clip => {
+      if (clip.id !== excludeClipId) {
+        snapTargets.push({ time: clip.offset, type: 'clip-start' })
+        snapTargets.push({ time: clip.offset + clip.duration, type: 'clip-end' })
+      }
+    })
+    
+    // Add audio clip edges as snap targets
+    state.audioClips.forEach(clip => {
+      if (clip.id !== excludeClipId) {
+        snapTargets.push({ time: clip.offset, type: 'clip-start' })
+        snapTargets.push({ time: clip.offset + clip.duration, type: 'clip-end' })
+      }
+    })
+
+    // Find closest snap target
+    let closestTarget: { time: number; type: 'playhead' | 'clip-start' | 'clip-end' } | null = null
+    let closestDistance = Infinity
+
+    snapTargets.forEach(target => {
+      const distance = Math.abs(time - target.time)
+      if (distance < SNAP_THRESHOLD && distance < closestDistance) {
+        closestDistance = distance
+        closestTarget = target
+      }
+    })
+
+    // Snap to closest target if within threshold
+    if (closestTarget) {
+      return { snappedTime: closestTarget.time, target: closestTarget }
+    }
+
+    // Otherwise snap to grid (1 second intervals)
+    const gridInterval = 1000
+    return { snappedTime: Math.round(time / gridInterval) * gridInterval, target: null }
+  }
+
+  // Legacy snap to grid function (for backward compatibility)
   const snapToGrid = (time: number) => {
     const interval = 1000 // 1 second
     return Math.round(time / interval) * interval
@@ -174,11 +228,23 @@ const Timeline: React.FC = () => {
   // Handle clip drag
   const handleClipMouseDown = useCallback((e: ReactMouseEvent, clip: Clip) => {
     e.stopPropagation()
-    // Check if clicking on resize handle
+    
+    // Check if clicking on trim handle or trim bar - these should NOT trigger drag
     const target = e.target as HTMLElement
-    if (target.classList.contains('resize-handle')) {
-      return // Let resize handler manage it
+    const isTrimBar = target.classList.contains('trim-bar') || target.closest('.trim-bar')
+    const isTrimHandleZone = target.classList.contains('trim-handle-zone') || target.closest('.trim-handle-zone')
+    
+    if (isTrimBar || isTrimHandleZone) {
+      return // Let trim handler manage it - don't drag
     }
+    
+    // Check if clicking on delete button
+    const isDeleteButton = target.closest('button')?.classList.contains('bg-red-600')
+    if (isDeleteButton) {
+      return // Let delete handler manage it
+    }
+    
+    // Otherwise, this is a drag operation - click anywhere else on the clip to move it
     setSelectedClipId(clip.id)
     setIsDraggingClip(true)
     setDragOffset({
@@ -223,8 +289,9 @@ const Timeline: React.FC = () => {
         if (!audioClip) return
         
         const newOffset = Math.max(0, dragOffset.startTime + dt)
-        const snappedOffset = snapToGrid(newOffset)
-        updateAudioClip(selectedClipId, { offset: snappedOffset })
+        const { snappedTime, target } = snapToPosition(newOffset, selectedClipId)
+        setSnapTarget(target)
+        updateAudioClip(selectedClipId, { offset: snappedTime })
         return
       }
       
@@ -234,8 +301,9 @@ const Timeline: React.FC = () => {
       if (isDraggingClip) {
         // Drag the entire clip
         const newOffset = Math.max(0, dragOffset.startTime + dt)
-        const snappedOffset = snapToGrid(newOffset)
-        updateClip(selectedClipId, { offset: snappedOffset })
+        const { snappedTime, target } = snapToPosition(newOffset, selectedClipId)
+        setSnapTarget(target)
+        updateClip(selectedClipId, { offset: snappedTime })
              } else if (isResizingClip) {
                // Resize (trim) the clip
                if (isResizingClip === 'left') {
@@ -270,6 +338,7 @@ const Timeline: React.FC = () => {
       setIsDraggingAudioClip(false)
       setIsResizingClip(null)
       setTrimFeedback({ side: null, clipId: null, newDuration: 0 })
+      setSnapTarget(null)
       
       // Save history after trim/drag completes
       saveHistory()
@@ -451,6 +520,21 @@ const Timeline: React.FC = () => {
               title="Zoom In"
             >
               +
+            </button>
+          </div>
+
+          {/* Snapping Toggle */}
+          <div className="border-l border-gray-700 ml-2 pl-2">
+            <button
+              onClick={() => setSnappingEnabled(!snappingEnabled)}
+              className={`px-3 py-1 rounded text-xs transition-colors ${
+                snappingEnabled 
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                  : 'bg-gray-800 hover:bg-gray-700 text-gray-400'
+              }`}
+              title={snappingEnabled ? 'Snapping: ON (Click to disable)' : 'Snapping: OFF (Click to enable)'}
+            >
+              {snappingEnabled ? '🔗 Snap' : '🔓 Snap'}
             </button>
           </div>
         </div>
@@ -730,19 +814,23 @@ const Timeline: React.FC = () => {
                     {/* CapCut-style Trim Handles */}
                     {isSelected && (
                       <>
-                        {/* Left trim handle - MUCH LARGER and clearer */}
+                        {/* Left trim handle - Only the thin white bar triggers resize */}
                         <div
-                          className="absolute left-0 top-0 bottom-0 w-12 cursor-ew-resize z-10"
-                          onMouseDown={(e) => {
-                            e.stopPropagation()
-                            handleResizeStart(e, 'left', clip)
-                          }}
+                          className="trim-handle absolute left-0 top-0 bottom-0 w-6 cursor-ew-resize z-10 pointer-events-none"
                         >
-                          {/* Large white trim bar - ALWAYS VISIBLE */}
-                          <div className={`absolute left-0 top-0 bottom-0 w-2 bg-white border-r-2 border-blue-500 ${isResizingClip === 'left' ? 'animate-pulse bg-blue-400' : ''}`} />
+                          {/* Thin white trim bar - ONLY this triggers resize, very small area */}
+                          <div 
+                            className={`trim-bar absolute left-0 top-0 bottom-0 w-1.5 bg-white border-r-2 border-blue-500 pointer-events-auto cursor-ew-resize z-10 ${isResizingClip === 'left' ? 'animate-pulse bg-blue-400 w-2' : ''}`}
+                            onMouseDown={(e) => {
+                              e.stopPropagation()
+                              handleResizeStart(e, 'left', clip)
+                            }}
+                          />
                           
-                          {/* Drag handle area with visual feedback */}
-                          <div className="absolute -left-8 top-0 bottom-0 w-8 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity">
+                          {/* Visual handle area - cosmetic only, NO pointer events so it doesn't interfere */}
+                          <div 
+                            className="trim-handle-zone absolute -left-6 top-0 bottom-0 w-6 flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity pointer-events-none"
+                          >
                             <div className="w-8 h-full bg-blue-500 bg-opacity-30 border-2 border-blue-500 rounded-lg flex flex-col items-center justify-center">
                               {/* Triple line indicator for drag */}
                               <div className="space-y-1">
@@ -755,25 +843,29 @@ const Timeline: React.FC = () => {
 
                           {/* Show trim feedback during drag */}
                           {trimFeedback.side === 'left' && trimFeedback.clipId === clip.id && (
-                            <div className="absolute -top-8 left-2 text-xs bg-blue-500 text-white px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                            <div className="absolute -top-8 left-2 text-xs bg-blue-500 text-white px-2 py-1 rounded shadow-lg whitespace-nowrap pointer-events-none">
                               -{formatTime(trimFeedback.newDuration)}
                             </div>
                           )}
                         </div>
 
-                        {/* Right trim handle - MUCH LARGER and clearer */}
+                        {/* Right trim handle - Only the white bar triggers resize */}
                         <div
-                          className="absolute right-0 top-0 bottom-0 w-12 cursor-ew-resize z-10"
-                          onMouseDown={(e) => {
-                            e.stopPropagation()
-                            handleResizeStart(e, 'right', clip)
-                          }}
+                          className="trim-handle absolute right-0 top-0 bottom-0 w-6 cursor-ew-resize z-10 pointer-events-none"
                         >
-                          {/* Large white trim bar - ALWAYS VISIBLE */}
-                          <div className={`absolute right-0 top-0 bottom-0 w-2 bg-white border-l-2 border-blue-500 ${isResizingClip === 'right' ? 'animate-pulse bg-blue-400' : ''}`} />
+                          {/* White trim bar - ONLY this triggers resize, rest of clip triggers drag */}
+                          <div 
+                            className={`trim-bar absolute right-0 top-0 bottom-0 w-1.5 bg-white border-l-2 border-blue-500 pointer-events-auto cursor-ew-resize z-10 ${isResizingClip === 'right' ? 'animate-pulse bg-blue-400 w-2' : ''}`}
+                            onMouseDown={(e) => {
+                              e.stopPropagation()
+                              handleResizeStart(e, 'right', clip)
+                            }}
+                          />
                           
-                          {/* Drag handle area with visual feedback */}
-                          <div className="absolute -right-8 top-0 bottom-0 w-8 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity">
+                          {/* Visual handle area - cosmetic only, NO pointer events so it doesn't interfere */}
+                          <div 
+                            className="trim-handle-zone absolute -right-6 top-0 bottom-0 w-6 flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity pointer-events-none"
+                          >
                             <div className="w-8 h-full bg-blue-500 bg-opacity-30 border-2 border-blue-500 rounded-lg flex flex-col items-center justify-center">
                               {/* Triple line indicator for drag */}
                               <div className="space-y-1">
@@ -786,7 +878,7 @@ const Timeline: React.FC = () => {
 
                           {/* Show trim feedback during drag */}
                           {trimFeedback.side === 'right' && trimFeedback.clipId === clip.id && (
-                            <div className="absolute -top-8 right-2 text-xs bg-blue-500 text-white px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                            <div className="absolute -top-8 right-2 text-xs bg-blue-500 text-white px-2 py-1 rounded shadow-lg whitespace-nowrap pointer-events-none">
                               -{formatTime(trimFeedback.newDuration)}
                             </div>
                           )}
@@ -797,6 +889,18 @@ const Timeline: React.FC = () => {
                   </div>
                 )
               })}
+
+              {/* Snap Target Indicator - Yellow line when snapping */}
+              {snapTarget && snappingEnabled && isDraggingClip && (
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 bg-yellow-400 z-15 pointer-events-none animate-pulse"
+                  style={{ left: `${timeToPx(snapTarget.time)}px` }}
+                >
+                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-[9px] text-yellow-400 font-bold bg-dark px-1 rounded whitespace-nowrap">
+                    SNAPPED
+                  </div>
+                </div>
+              )}
 
               {/* Playhead - draggable */}
               <div
@@ -908,6 +1012,18 @@ const Timeline: React.FC = () => {
                 )
               })}
 
+              {/* Snap Target Indicator - Yellow line when snapping audio clips */}
+              {snapTarget && snappingEnabled && isDraggingAudioClip && (
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 bg-yellow-400 z-15 pointer-events-none animate-pulse"
+                  style={{ left: `${timeToPx(snapTarget.time)}px` }}
+                >
+                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-[9px] text-yellow-400 font-bold bg-dark px-1 rounded whitespace-nowrap">
+                    SNAPPED
+                  </div>
+                </div>
+              )}
+
               {/* Playhead */}
               <div
                 className="absolute top-0 bottom-0 w-1 bg-red-500 z-20"
@@ -975,6 +1091,9 @@ const Timeline: React.FC = () => {
       {/* Footer Tips */}
       <div className="px-4 py-2 border-t border-gray-800 bg-dark text-xs text-gray-500">
         💡 Drag white trim bars to trim • <kbd className="px-1 bg-gray-800 rounded">Delete</kbd> Remove • <kbd className="px-1 bg-gray-800 rounded">Cmd/Ctrl+Z</kbd> Undo • <kbd className="px-1 bg-gray-800 rounded">S</kbd> Split • <kbd className="px-1 bg-gray-800 rounded">Space</kbd> Play/Pause
+        {snappingEnabled && (
+          <span className="ml-2 text-yellow-400">• 🔗 Snap ON: Drag clips near playhead/edges to auto-align</span>
+        )}
       </div>
     </div>
   )
